@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ghostshare-vault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ghostshare-vault
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=50
+    volumes:
+      - ./output:/app/output
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

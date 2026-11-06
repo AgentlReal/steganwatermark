@@ -1,551 +1,395 @@
 """
-Interactive Web Application for Steganography + Watermarking System.
-Built with Streamlit for live demonstration, parameter tuning, and academic presentation.
-Includes full support for custom photo upload for both embedding and extraction.
+GhostShare Web Vault — Production-Grade Covert Data Vault & Anti-Censorship Interface.
+Equipped with Plausible Deniability (Multi-Passphrase), Zero-Auxiliary-Key Architecture,
+and Real-Time Forensic Steganalysis Auditing.
 """
 
-import os
 import io
+import os
 import numpy as np
 from PIL import Image
 import streamlit as st
-import pandas as pd
+import matplotlib.pyplot as plt
 
-from core.watermark import WatermarkKey, DwtSvdWatermarker
-from core.pipeline import DualDomainPipeline
-from core.metrics import (
-    calculate_psnr,
-    calculate_ssim,
-    calculate_nc,
-    calculate_ber,
-    calculate_capacity,
-)
-from core.attacks import (
-    attack_jpeg_compression,
-    attack_gaussian_noise,
-    attack_salt_pepper,
-    attack_cropping,
-    attack_median_filter,
-    attack_gaussian_blur,
-)
+from core.vault import GhostVault, GhostVaultError, ExtractedVaultPayload
+from core.anti_steganalysis import run_full_audit, compute_amplified_residual
 
 
+# -----------------------------------------------------------------------------
+# Streamlit Page Configuration
+# -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Dual-Domain Stego-Watermark System",
+    page_title="GhostShare — Covert Data Vault",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("🛡️ Dual-Domain Steganography & Digital Watermarking System")
+# Custom Cyber Defense Styling (Dark Theme & Visual Cards)
 st.markdown(
     """
-    **Sistem Integrasi Domain Ganda (Frequency DWT-SVD + Spatial PRNG-LSB AES-256-GCM)**
-    Mendukung penuh upload foto mandiri untuk penyisipan (*embedding*) maupun ekstraksi (*extraction*).
-    """
+    <style>
+    .stApp {
+        background-color: #0b0f19;
+        color: #e2e8f0;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #131b2e 0%, #1e293b 100%);
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    .metric-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #38bdf8;
+    }
+    .metric-label {
+        font-size: 13px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-badge-secure {
+        display: inline-block;
+        background-color: #064e3b;
+        color: #34d399;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid #059669;
+    }
+    .status-badge-warning {
+        display: inline-block;
+        background-color: #7f1d1d;
+        color: #f87171;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid #dc2626;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------
-# Sidebar Configuration
-# ---------------------------------------------------------
-st.sidebar.header("⚙️ Konfigurasi Sistem")
 
-standard_covers = {
-    "Lena (512x512)": "data/covers/lena.png",
-    "Peppers (512x512)": "data/covers/peppers.png",
-    "Baboon (512x512)": "data/covers/baboon.png",
-    "Airplane (512x512)": "data/covers/airplane.png",
-}
+# -----------------------------------------------------------------------------
+# Helper Functions
+# -----------------------------------------------------------------------------
+@st.cache_data
+def get_preset_covers():
+    presets = {}
+    preset_paths = {
+        "Cover Sample (1024x1024)": "input/cover.png",
+        "Lena (512x512)": "data/covers/lena.png",
+        "Peppers (512x512)": "data/covers/peppers.png",
+        "Baboon (512x512)": "data/covers/baboon.png",
+        "Airplane (512x512)": "data/covers/airplane.png",
+    }
+    for name, path in preset_paths.items():
+        if os.path.exists(path):
+            presets[name] = path
+    return presets
 
-standard_watermarks = {
-    "Copyright Logo (64x64)": "data/watermarks/copyright_64.png",
-    "Security Text (64x64)": "data/watermarks/watermark_text_64.png",
-    "Compact Logo (32x32)": "data/watermarks/copyright_32.png",
-}
 
-alpha_val = st.sidebar.slider(
-    "Watermark Strength Factor (α)", min_value=0.01, max_value=0.15, value=0.05, step=0.01,
-    help="Nilai α mengontrol keseimbangan antara imperceptibility citra (PSNR) dan robustness watermark."
-)
+def load_image_from_file_or_preset(uploaded_file, preset_choice, presets_dict):
+    if uploaded_file is not None:
+        img = Image.open(uploaded_file)
+        return np.array(img.convert("RGB")), uploaded_file.name
+    elif preset_choice and preset_choice in presets_dict:
+        path = presets_dict[preset_choice]
+        img = Image.open(path)
+        return np.array(img.convert("RGB")), os.path.basename(path)
+    return None, ""
 
-subband_choice = st.sidebar.selectbox(
-    "DWT Subband Target", ["HL", "LH", "HH", "LL"], index=0,
-    help="HL/LH direkomendasikan untuk stabilitas frekuensi menengah terhadap kompresi."
-)
 
-default_passphrase = st.sidebar.text_input(
-    "Secret Passphrase (AES-256-GCM)", value="Aria2026SecureKey!", type="password"
-)
+# -----------------------------------------------------------------------------
+# Sidebar: System Status & Security Guide
+# -----------------------------------------------------------------------------
+with st.sidebar:
+    st.title("🛡️ GhostShare Vault")
+    st.caption("Deniable Covert Data Vault v2.0 (Production)")
 
-# Ensure keys backup directory exists
-os.makedirs("output/keys", exist_ok=True)
-backup_key_path = "output/keys/latest_key.key"
+    st.markdown("---")
+    st.subheader("🔐 Keamanan Sistem")
+    st.markdown(
+        """
+        - **Kriptografi**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iterasi)
+        - **Steganografi**: PRNG-LSB Matching ($\pm 1$)
+        - **Plausible Deniability**: Multi-Passphrase (*Real* vs *Decoy*) dengan partisi ruang bebas-tabrakan
+        - **Zero-Key Footprint**: Citra pembawa 100% mandiri
+        """
+    )
 
-# Initialize Session State
-if "last_stego_wm" not in st.session_state:
-    st.session_state.last_stego_wm = None
-if "last_key" not in st.session_state:
-    st.session_state.last_key = None
-if "last_wm_logo" not in st.session_state:
-    st.session_state.last_wm_logo = None
-if "last_cover" not in st.session_state:
-    st.session_state.last_cover = None
-if "last_payload" not in st.session_state:
-    st.session_state.last_payload = None
+    st.markdown("---")
+    st.subheader("💡 Tips Plausible Deniability")
+    st.info(
+        "Jika Anda menghadapi risiko pemeriksaan paksa (coercion), gunakan fitur **Decoy Mode**. "
+        "Memasukkan sandi tipuan akan membuka dokumen umpan yang sah, tanpa ada jejak matematis dari dokumen rahasia utama."
+    )
 
-tabs = st.tabs([
-    "📥 1. Penyisipan Ganda (Dual Embed)",
-    "📤 2. Ekstraksi & Verifikasi",
-    "⚡ 3. Simulator Uji Serangan (Robustness)",
+
+# -----------------------------------------------------------------------------
+# Main Application Tabs
+# -----------------------------------------------------------------------------
+tab_pack, tab_unpack, tab_audit = st.tabs([
+    "🗄️ 1. Pack Vault (Kunci & Sembunyikan)",
+    "🔓 2. Unpack Vault (Buka & Ekstrak)",
+    "🔬 3. Forensic & Steganalysis Audit",
 ])
 
-# =========================================================
-# TAB 1: DUAL EMBEDDING (Penyisipan Mandiri)
-# =========================================================
-with tabs[0]:
-    st.subheader("1. Penyisipan Ganda: Watermark (DWT-SVD) + Steganografi (PRNG-LSB)")
+vault = GhostVault()
 
-    col_cov, col_wm = st.columns(2)
-    with col_cov:
-        st.markdown("#### 📷 A. Pilih / Upload Foto Cover")
-        cover_source = st.radio(
-            "Sumber Citra Cover:",
-            ["Upload Foto Mandiri (Bebas)", "Citra Standar Benchmark"],
-            horizontal=True,
-            key="cov_src_choice"
-        )
 
-        cover_img_raw = None
-        if cover_source == "Upload Foto Mandiri (Bebas)":
-            uploaded_cov = st.file_uploader(
-                "Unggah Foto Anda (PNG, JPG, JPEG, WEBP, BMP):",
-                type=["png", "jpg", "jpeg", "webp", "bmp"],
-                key="cov_uploader"
-            )
-            if uploaded_cov is not None:
-                cover_img_raw = Image.open(uploaded_cov).convert("RGB")
-                st.caption(f"📁 Foto diunggah: `{uploaded_cov.name}` | Resolusi Asli: `{cover_img_raw.size[0]}×{cover_img_raw.size[1]}`")
-            else:
-                # Default fallback
-                cover_img_raw = Image.open(standard_covers["Lena (512x512)"]).convert("RGB")
-                st.info("ℹ️ Belum ada foto diunggah, menampilkan preview citra default.")
-
-            res_option = st.selectbox(
-                "Penanganan Resolusi Foto:",
-                [
-                    "Auto-Resize 512×512 (Rekomendasi / Cepat)",
-                    "Auto-Resize 1024×1024 (Resolusi Tinggi)",
-                    "Pertahankan Resolusi Asli Foto",
-                ],
-                index=0,
-                key="res_option_select"
-            )
-            if "512×512" in res_option:
-                cover_img_proc = cover_img_raw.resize((512, 512), Image.Resampling.LANCZOS)
-            elif "1024×1024" in res_option:
-                cover_img_proc = cover_img_raw.resize((1024, 1024), Image.Resampling.LANCZOS)
-            else:
-                # Ensure even width and height for DWT
-                w, h = cover_img_raw.size
-                w_even = w - (w % 2)
-                h_even = h - (h % 2)
-                if w != w_even or h != h_even:
-                    cover_img_proc = cover_img_raw.crop((0, 0, w_even, h_even))
-                else:
-                    cover_img_proc = cover_img_raw
-        else:
-            selected_cov = st.selectbox("Pilih Citra Benchmark:", list(standard_covers.keys()), key="bench_cov_sel")
-            cover_img_raw = Image.open(standard_covers[selected_cov]).convert("RGB")
-            cover_img_proc = cover_img_raw.resize((512, 512))
-
-        st.image(
-            cover_img_proc,
-            caption=f"Cover Siap Diproses: {cover_img_proc.size[0]}×{cover_img_proc.size[1]} piksel (RGB)",
-            use_container_width=True
-        )
-
-    with col_wm:
-        st.markdown("#### 🛡️ B. Pilih / Upload Logo Watermark")
-        wm_source = st.radio(
-            "Sumber Logo Watermark:",
-            ["Logo Standar", "Upload Logo Mandiri (PNG/JPG)"],
-            horizontal=True,
-            key="wm_src_choice"
-        )
-        if wm_source == "Logo Standar":
-            selected_wm = st.selectbox("Pilih Logo Hak Cipta:", list(standard_watermarks.keys()), key="std_wm_sel")
-            wm_img_proc = Image.open(standard_watermarks[selected_wm]).convert("L")
-        else:
-            uploaded_wm = st.file_uploader("Upload Logo Hak Cipta (PNG/JPG):", type=["png", "jpg", "jpeg"], key="custom_wm_up")
-            if uploaded_wm is not None:
-                wm_img_proc = Image.open(uploaded_wm).convert("L")
-                st.caption(f"📁 Logo diunggah: `{uploaded_wm.name}` ({wm_img_proc.size[0]}×{wm_img_proc.size[1]})")
-            else:
-                wm_img_proc = Image.open(standard_watermarks["Copyright Logo (64x64)"]).convert("L")
-
-        st.image(wm_img_proc, caption=f"Logo Watermark: {wm_img_proc.size[0]}×{wm_img_proc.size[1]}", width=128)
-
-    st.markdown("#### 🔒 C. Data Rahasia (Steganografi Payload)")
-    payload_mode = st.radio("Metode Input Payload:", ["Teks Langsung", "Upload File (TXT, JSON, PDF, dll)"], horizontal=True, key="pl_mode_radio")
-    if payload_mode == "Teks Langsung":
-        payload_text = st.text_area(
-            "Pesan Rahasia:",
-            value="OPERASI RAHASIA 2026: Sistem integrasi steganografi dan watermarking berhasil disisipkan dengan enkripsi AES-256-GCM pada citra kustom.",
-            height=90,
-            key="pl_text_input"
-        )
-        payload_bytes = payload_text.encode("utf-8")
-    else:
-        uploaded_pl = st.file_uploader("Upload File Payload Bebas:", type=None, key="custom_pl_file")
-        if uploaded_pl is not None:
-            payload_bytes = uploaded_pl.read()
-        else:
-            payload_bytes = b"Contoh payload default berukuran ringkas."
-
-    # Dynamic Capacity calculation based on actual image dimensions
-    w_p, h_p = cover_img_proc.size
-    cap_info = calculate_capacity((h_p, w_p, 3))
-    st.info(
-        f"ℹ️ Dimensi Citra: **{w_p}×{h_p} px** | Ukuran Payload: **{len(payload_bytes):,} bytes** | "
-        f"Kapasitas Maksimum Carrier: **{cap_info['max_bytes']:,} bytes** (~{cap_info['bpp']} bpp)"
+# =============================================================================
+# TAB 1: PACK VAULT
+# =============================================================================
+with tab_pack:
+    st.header("🗄️ Kemas & Sembunyikan File ke Citra Pembawa")
+    st.write(
+        "Sembunyikan file rahasia apa pun (PDF, ZIP, DOCX, TXT, KDBX, gambar) ke dalam citra foto biasa. "
+        "Dapat mengaktifkan **Plausible Deniability** untuk proteksi terhadap pemaksaan kata sandi."
     )
 
-    if st.button("🚀 Jalankan Penyisipan Ganda", type="primary", key="btn_run_embed"):
-        with st.spinner("Memproses penyisipan DWT-SVD (Frekuensi) dan PRNG-LSB AES-256 (Spasial)..."):
-            pipeline = DualDomainPipeline(watermark_alpha=alpha_val, watermark_subband=subband_choice)
-            cover_np = np.array(cover_img_proc)
-            wm_np = np.array(wm_img_proc)
+    col1, col2 = st.columns([1, 1])
 
-            try:
-                embed_res = pipeline.run_dual_embedding(
-                    cover_image=cover_np,
-                    watermark_logo=wm_np,
-                    stego_payload=payload_bytes,
-                    stego_passphrase=default_passphrase,
-                )
+    with col1:
+        st.subheader("1. Pilih Citra Pembawa (Cover Image)")
+        presets = get_preset_covers()
+        preset_options = ["Unggah Gambar Sendiri (PNG/JPG)"] + list(presets.keys())
+        choice = st.selectbox("Pilih Sumber Citra:", preset_options)
 
-                # Store in session state
-                st.session_state.last_stego_wm = embed_res.stego_watermarked_image
-                st.session_state.last_key = embed_res.watermark_key
-                st.session_state.last_wm_logo = wm_np
-                st.session_state.last_cover = cover_np
-                st.session_state.last_payload = payload_bytes
+        cover_uploaded = None
+        if choice == "Unggah Gambar Sendiri (PNG/JPG)":
+            cover_uploaded = st.file_uploader("Unggah Cover Image:", type=["png", "jpg", "jpeg"])
 
-                # Backup key to disk
-                embed_res.watermark_key.save_to_file(backup_key_path)
+        cover_arr, cover_fn = load_image_from_file_or_preset(cover_uploaded, choice, presets)
 
-                st.success("✅ Penyisipan Ganda Berhasil Sempurna!")
+        if cover_arr is not None:
+            st.image(cover_arr, caption=f"Cover: {cover_fn} ({cover_arr.shape[1]}x{cover_arr.shape[0]} px)", use_container_width=True)
+            caps = vault.get_capacity_info(cover_arr.shape)
+            
+            c_m1, c_m2 = st.columns(2)
+            with c_m1:
+                st.metric("Kapasitas Single Payload", f"{caps['single_payload_max_bytes'] / 1024:.1f} KB")
+            with c_m2:
+                st.metric("Kapasitas Dual Decoy (Masing-masing)", f"{caps['dual_payload_max_bytes_each'] / 1024:.1f} KB")
 
-                # Display Metric Badges
-                m = embed_res.metrics
-                c1, c2, c3, c4, c5 = st.columns(5)
-                c1.metric("PSNR (Kualitas)", f"{m['psnr']:.2f} dB", delta=f"{m['delta_psnr']:+.2f} dB vs WM")
-                c2.metric("SSIM (Struktur)", f"{m['ssim']:.4f}")
-                c3.metric("Watermark NC", f"{m['post_stego_wm_nc']:.4f}", delta=f"{m['delta_nc']:+.5f} ΔNC")
-                c4.metric("Waktu Proses", f"{embed_res.embed_time_ms:.1f} ms")
-                c5.metric("Peak RAM", f"{embed_res.peak_memory_kb:.1f} KB")
+    with col2:
+        st.subheader("2. Berkas Rahasia Utama (Secret Payload)")
+        secret_file = st.file_uploader("Pilih Berkas Rahasia Utama:", key="secret_file_input")
+        secret_pass = st.text_input("Kata Sandi Rahasia Utama:", type="password", key="secret_pass_input", help="Digunakan untuk mengenkripsi payload rahasia.")
 
-                # Visual Comparisons
-                col_res1, col_res2, col_res3 = st.columns(3)
-                with col_res1:
-                    st.image(embed_res.watermarked_image, caption="1. Watermarked Only (DWT-SVD)", use_container_width=True)
-                with col_res2:
-                    st.image(embed_res.stego_watermarked_image, caption="2. Stego-Watermarked (Final)", use_container_width=True)
-                with col_res3:
-                    diff = np.abs(cover_np.astype(float) - embed_res.stego_watermarked_image.astype(float)) * 20.0
-                    st.image(np.clip(diff, 0, 255).astype(np.uint8), caption="3. Amplified Residual (x20)", use_container_width=True)
+        st.markdown("---")
+        use_deniability = st.checkbox("🛡️ Aktifkan Plausible Deniability (Decoy / Duress Mode)", value=False)
 
-                # Download Buttons
-                st.markdown("### 💾 Unduh Berkas Hasil Penyisipan")
-                col_dl1, col_dl2 = st.columns(2)
-                
-                with col_dl1:
-                    buf_img = io.BytesIO()
-                    Image.fromarray(embed_res.stego_watermarked_image).save(buf_img, format="PNG")
+        decoy_file = None
+        decoy_pass = None
+
+        if use_deniability:
+            st.markdown(
+                """
+                > **Plausible Deniability**: Memungkinkan Anda memiliki dua kata sandi berbeda pada satu gambar. 
+                > Jika Anda dipaksa menyerahkan sandi, berikan **Decoy Passphrase** untuk membuka berkas tipuan di bawah.
+                """
+            )
+            decoy_file = st.file_uploader("Pilih Berkas Tipuan (Decoy File):", key="decoy_file_input")
+            decoy_pass = st.text_input("Kata Sandi Tipuan (Decoy Passphrase):", type="password", key="decoy_pass_input", help="Kata sandi yang diberikan saat dipaksa.")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        pack_btn = st.button("🔒 Kunci & Kemas ke Dalam Citra", type="primary", use_container_width=True)
+
+    if pack_btn:
+        if cover_arr is None:
+            st.error("Silakan pilih atau unggah citra pembawa terlebih dahulu.")
+        elif secret_file is None:
+            st.error("Silakan pilih berkas rahasia utama yang ingin disembunyikan.")
+        elif not secret_pass:
+            st.error("Kata sandi rahasia utama tidak boleh kosong.")
+        elif use_deniability and (decoy_file is None or not decoy_pass):
+            st.error("Jika mode Plausible Deniability aktif, berkas tipuan dan sandi tipuan wajib diisi.")
+        elif use_deniability and secret_pass == decoy_pass:
+            st.error("Kata sandi tipuan harus berbeda dari kata sandi utama.")
+        else:
+            with st.spinner("Mengenkripsi dan menyisipkan data ke citra pembawa..."):
+                secret_bytes = secret_file.read()
+                decoy_bytes = decoy_file.read() if (use_deniability and decoy_file) else None
+
+                try:
+                    carrier_arr, audit = vault.pack(
+                        cover_image=cover_arr,
+                        secret_payload=secret_bytes,
+                        secret_passphrase=secret_pass,
+                        secret_filename=secret_file.name,
+                        decoy_payload=decoy_bytes,
+                        decoy_passphrase=decoy_pass,
+                        decoy_filename=decoy_file.name if decoy_file else "decoy.bin",
+                    )
+
+                    st.success("✅ Berkas berhasil disembunyikan ke dalam citra pembawa!")
+
+                    # Show Metrics
+                    m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+                    with m_col1:
+                        st.markdown(f"<div class='metric-card'><div class='metric-label'>Fidelitas Visual (PSNR)</div><div class='metric-value'>{audit['psnr_db']:.2f} dB</div></div>", unsafe_allow_html=True)
+                    with m_col2:
+                        st.markdown(f"<div class='metric-card'><div class='metric-label'>Struktur Citra (SSIM)</div><div class='metric-value'>{audit['ssim']:.4f}</div></div>", unsafe_allow_html=True)
+                    with m_col3:
+                        st.markdown(f"<div class='metric-card'><div class='metric-label'>Stealth Score</div><div class='metric-value'>{audit['stealth_score']}%</div></div>", unsafe_allow_html=True)
+                    with m_col4:
+                        badge_class = "status-badge-secure" if audit["is_secure"] else "status-badge-warning"
+                        st.markdown(f"<div class='metric-card'><div class='metric-label'>Status Keamanan</div><div style='margin-top:8px;'><span class='{badge_class}'>{audit['verdict']}</span></div></div>", unsafe_allow_html=True)
+
+                    # Prepare Carrier Download
+                    buf = io.BytesIO()
+                    carrier_img_pil = Image.fromarray(carrier_arr.astype(np.uint8))
+                    carrier_img_pil.save(buf, format="PNG")
+                    carrier_bytes = buf.getvalue()
+
                     st.download_button(
-                        label="⬇️ Unduh Foto Stego-Watermark (.png)",
-                        data=buf_img.getvalue(),
-                        file_name="stego_watermarked_output.png",
+                        label="⬇️ Unduh Citra Pembawa (carrier.png)",
+                        data=carrier_bytes,
+                        file_name="ghost_carrier.png",
                         mime="image/png",
-                        key="btn_dl_stego_img"
+                        type="primary",
+                        use_container_width=True,
                     )
 
-                with col_dl2:
-                    key_bytes = embed_res.watermark_key.to_bytes()
-                    st.download_button(
-                        label="⬇️ Unduh File Kunci Watermark (watermark_key.key)",
-                        data=key_bytes,
-                        file_name="watermark_key.key",
-                        mime="application/octet-stream",
-                        help="File ini berisi metadata nilai singular untuk merekonstruksi logo hak cipta saat ekstraksi.",
-                        key="btn_dl_wm_key"
-                    )
-
-            except Exception as ex:
-                st.error(f"❌ Terjadi kesalahan selama penyisipan: {ex}")
+                except GhostVaultError as e:
+                    st.error(f"Gagal mengemas brankas: {e}")
 
 
-# =========================================================
-# TAB 2: EXTRACTION & VERIFICATION (Ekstraksi Mandiri)
-# =========================================================
-with tabs[1]:
-    st.subheader("2. Ekstraksi Mandiri & Verifikasi Integritas Data")
-    st.markdown(
-        "Unggah foto apa pun hasil steganografi dan watermarking untuk memulihkan pesan rahasia terenkripsi "
-        "serta membuktikan tanda kepemilikan hak cipta."
+# =============================================================================
+# TAB 2: UNPACK VAULT
+# =============================================================================
+with tab_unpack:
+    st.header("🔓 Buka & Ekstrak Berkas dari Citra Pembawa")
+    st.write(
+        "Cukup unggah citra pembawa tunggal (`.png`) dan masukkan kata sandi Anda. "
+        "Tidak memerlukan file kunci tambahan (*zero-key footprint*). "
+        "Sistem secara otomatis mendeteksi apakah kata sandi yang Anda masukkan adalah sandi utama atau sandi tipuan."
     )
 
-    col_ext_img, col_ext_key = st.columns(2)
+    col_u1, col_u2 = st.columns([1, 1])
 
-    with col_ext_img:
-        st.markdown("#### 📷 A. Sumber Foto yang Ingin Diekstrak")
-        img_source_choice = st.radio(
-            "Pilih Sumber Foto:",
-            ["Upload Foto Mandiri (PNG/JPG)", "Gunakan Foto dari Sesi Terakhir (di Memori)"],
-            horizontal=True,
-            key="img_source_ext"
-        )
-
-        target_ext_img = None
-        if img_source_choice == "Upload Foto Mandiri (PNG/JPG)":
-            uploaded_ext_file = st.file_uploader(
-                "Upload File Foto Stego-Watermark (PNG/JPG):",
-                type=["png", "jpg", "jpeg", "webp", "bmp"],
-                key="ext_img_uploader"
-            )
-            if uploaded_ext_file is not None:
-                pil_target = Image.open(uploaded_ext_file).convert("RGB")
-                target_ext_img = np.array(pil_target)
-                st.caption(f"📁 Foto siap diekstrak: `{uploaded_ext_file.name}` ({target_ext_img.shape[1]}×{target_ext_img.shape[0]} px)")
-                st.image(target_ext_img, caption="Citra Target Ekstraksi", use_container_width=True)
-            else:
-                st.info("ℹ️ Silakan upload file foto hasil steganografi/watermarking di atas.")
+    with col_u1:
+        carrier_input = st.file_uploader("Unggah Citra Pembawa (PNG):", type=["png"], key="unpack_carrier_uploader")
+        if carrier_input is not None:
+            carrier_pil = Image.open(carrier_input)
+            carrier_arr = np.array(carrier_pil.convert("RGB"))
+            st.image(carrier_arr, caption=f"Carrier: {carrier_input.name} ({carrier_arr.shape[1]}x{carrier_arr.shape[0]} px)", use_container_width=True)
         else:
-            if st.session_state.last_stego_wm is not None:
-                target_ext_img = st.session_state.last_stego_wm
-                st.caption(f"📁 Menggunakan foto dari sesi memori aktif ({target_ext_img.shape[1]}×{target_ext_img.shape[0]} px)")
-                st.image(target_ext_img, caption="Citra dari Sesi Terakhir", use_container_width=True)
+            carrier_arr = None
+
+    with col_u2:
+        unpack_pass = st.text_input("Masukkan Kata Sandi:", type="password", key="unpack_pass_input")
+        unpack_btn = st.button("🔓 Buka Kunci Brankas", type="primary", use_container_width=True)
+
+        if unpack_btn:
+            if carrier_arr is None:
+                st.error("Silakan unggah citra pembawa terlebih dahulu.")
+            elif not unpack_pass:
+                st.error("Silakan masukkan kata sandi.")
             else:
-                st.warning("⚠️ Tidak ada citra di memori aktif. Silakan pilih 'Upload Foto Mandiri'.")
-
-    with col_ext_key:
-        st.markdown("#### 🔑 B. Sumber File Kunci Watermark (.key)")
-        key_source_choice = st.radio(
-            "Pilih Sumber Kunci Watermark:",
-            ["Upload File Kunci (.key)", "Gunakan Kunci Sesi Terakhir / File Backup", "Lewati Ekstraksi Watermark (Hanya Steganografi)"],
-            key="key_source_ext"
-        )
-
-        loaded_wm_key = None
-        if key_source_choice == "Upload File Kunci (.key)":
-            uploaded_key_file = st.file_uploader(
-                "Upload File Kunci Watermark (`.key`):",
-                type=["key", "dat", "bin"],
-                key="ext_key_uploader"
-            )
-            if uploaded_key_file is not None:
-                try:
-                    loaded_wm_key = WatermarkKey.from_bytes(uploaded_key_file.read())
-                    st.success(f"✅ Kunci Watermark Valid! (Subband: `{loaded_wm_key.subband}`, α: `{loaded_wm_key.alpha}`)")
-                except Exception as e:
-                    st.error(f"❌ File kunci tidak valid: {e}")
-            else:
-                st.info("ℹ️ Upload file `.key` yang Anda unduh saat penyisipan.")
-        elif key_source_choice == "Gunakan Kunci Sesi Terakhir / File Backup":
-            if st.session_state.last_key is not None:
-                loaded_wm_key = st.session_state.last_key
-                st.success("✅ Menggunakan kunci dari sesi aktif.")
-            elif os.path.exists(backup_key_path):
-                try:
-                    loaded_wm_key = WatermarkKey.load_from_file(backup_key_path)
-                    st.success("✅ Menggunakan file kunci cadangan lokal (`output/keys/latest_key.key`).")
-                except Exception:
-                    st.warning("⚠️ Gagal membaca file cadangan lokal.")
-            else:
-                st.warning("⚠️ Tidak ditemukan kunci di memori maupun disk cadangan.")
-        else:
-            st.info("ℹ️ Ekstraksi watermark akan dilewati. Sistem hanya akan memulihkan data rahasia steganografi.")
-
-    st.markdown("#### 🔐 C. Kunci Dekripsi Steganografi (Passphrase)")
-    extract_pass = st.text_input(
-        "Masukkan Secret Passphrase:",
-        value=default_passphrase,
-        type="password",
-        key="ext_passphrase_input"
-    )
-
-    # Optional reference logo for NC calculation
-    ref_logo_choice = st.selectbox(
-        "Logo Acuan untuk Menghitung Korelasi NC (Opsional):",
-        ["Tidak Menggunakan Acuan (Hanya Tampilkan Logo)", "Copyright Logo (64x64)", "Security Text (64x64)", "Compact Logo (32x32)"],
-        index=1,
-        key="ref_logo_sel"
-    )
-
-    if st.button("🔍 Jalankan Ekstraksi & Verifikasi", type="primary", key="btn_run_extract"):
-        if target_ext_img is None:
-            st.error("❌ Silakan sediakan citra target terlebih dahulu (upload atau gunakan sesi aktif).")
-        else:
-            with st.spinner("Mengekstraksi data rahasia dan merekonstruksi tanda kepemilikan..."):
-                col_res_stego, col_res_wm = st.columns(2)
-
-                # 1. Ekstraksi Steganografi (Blind)
-                with col_res_stego:
-                    st.markdown("### 🔒 1. Hasil Ekstraksi Steganografi")
-                    stego_engine = DualDomainPipeline().steganographer
+                with st.spinner("Memverifikasi integritas kriptografi dan mendekripsi berkas..."):
                     try:
-                        decrypted_data = stego_engine.extract(target_ext_img, extract_pass)
-                        st.success("✅ Dekripsi AES-256-GCM Sukses! Tag Autentikasi Valid.")
-                        st.caption(f"Ukuran payload terpulihkan: **{len(decrypted_data)} bytes**")
+                        extracted = vault.unpack(carrier_arr, unpack_pass)
 
-                        # Text or Binary handling
-                        try:
-                            decoded_text = decrypted_data.decode("utf-8")
-                            st.text_area("Plaintext Rahasia Terpulihkan:", value=decoded_text, height=130)
-                            
-                            # Download Text
-                            st.download_button(
-                                label="⬇️ Unduh Pesan Terpulihkan (.txt)",
-                                data=decoded_text,
-                                file_name="recovered_secret.txt",
-                                mime="text/plain",
-                                key="btn_dl_rec_txt"
-                            )
-                        except UnicodeDecodeError:
-                            st.info("Data terpulihkan adalah file biner.")
-                            st.download_button(
-                                label="⬇️ Unduh Berkas Biner Terpulihkan (.bin)",
-                                data=decrypted_data,
-                                file_name="recovered_secret.bin",
-                                mime="application/octet-stream",
-                                key="btn_dl_rec_bin"
-                            )
-                    except Exception as e:
-                        st.error(f"❌ Gagal Dekripsi Steganografi: {e}")
-                        st.caption("Penyebab: Passphrase salah, atau citra telah termodifikasi/rusak oleh serangan kompresi/noise.")
+                        st.success(f"🎉 Berhasil membuka berkas: **{extracted.filename}**")
+                        
+                        st.markdown(
+                            f"""
+                            <div class='metric-card'>
+                                <div><strong>Nama File:</strong> {extracted.filename}</div>
+                                <div><strong>Tipe Dokumen (MIME):</strong> {extracted.mime_type}</div>
+                                <div><strong>Ukuran:</strong> {extracted.size_bytes:,} bytes ({extracted.size_bytes / 1024:.2f} KB)</div>
+                                <div><strong>Slot Partisi:</strong> <span class='status-badge-secure'>{extracted.partition_mode.upper()}</span></div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
-                # 2. Ekstraksi Watermark (Semi-Blind)
-                with col_res_wm:
-                    st.markdown("### 🛡️ 2. Hasil Ekstraksi Watermark Hak Cipta")
-                    if loaded_wm_key is not None:
-                        try:
-                            wm_engine = DwtSvdWatermarker(alpha=loaded_wm_key.alpha, subband=loaded_wm_key.subband)
-                            extracted_logo = wm_engine.extract(target_ext_img, loaded_wm_key)
+                        # Download button for recovered file
+                        st.download_button(
+                            label=f"⬇️ Unduh Berkas Hasil Ekstraksi ({extracted.filename})",
+                            data=extracted.payload_bytes,
+                            file_name=extracted.filename,
+                            mime=extracted.mime_type,
+                            type="primary",
+                            use_container_width=True,
+                        )
 
-                            st.image(
-                                extracted_logo,
-                                caption=f"Logo Watermark Terekstraksi ({extracted_logo.shape[1]}×{extracted_logo.shape[0]})",
-                                width=150
-                            )
+                        # Inline preview if text or image
+                        if extracted.mime_type.startswith("text/"):
+                            st.subheader("📄 Pratinjau Teks:")
+                            st.text_area("Isi Teks:", extracted.payload_bytes.decode("utf-8", errors="replace"), height=200)
+                        elif extracted.mime_type.startswith("image/"):
+                            st.subheader("🖼️ Pratinjau Citra:")
+                            st.image(extracted.payload_bytes)
 
-                            # Calculate NC if reference logo is selected
-                            if ref_logo_choice != "Tidak Menggunakan Acuan (Hanya Tampilkan Logo)":
-                                ref_path = standard_watermarks.get(ref_logo_choice)
-                                if ref_path and os.path.exists(ref_path):
-                                    ref_np = np.array(Image.open(ref_path).convert("L"))
-                                    nc_score = calculate_nc(ref_np, extracted_logo)
-                                    if nc_score >= 0.85:
-                                        st.success(f"✅ Hak Cipta Sah Terverifikasi! (NC = **{nc_score:.4f}** ≥ 0.85)")
-                                    else:
-                                        st.warning(f"⚠️ Terjadi Degradasi Hak Cipta (NC = **{nc_score:.4f}** < 0.85)")
-
-                            # Download Logo Button
-                            buf_logo = io.BytesIO()
-                            Image.fromarray(extracted_logo).save(buf_logo, format="PNG")
-                            st.download_button(
-                                label="⬇️ Unduh Logo Terekstraksi (.png)",
-                                data=buf_logo.getvalue(),
-                                file_name="extracted_watermark_logo.png",
-                                mime="image/png",
-                                key="btn_dl_rec_logo"
-                            )
-
-                        except Exception as e:
-                            st.error(f"❌ Gagal Ekstraksi Watermark: {e}")
-                    else:
-                        st.info("ℹ️ Ekstraksi watermark dilewati (tidak ada file kunci `.key` yang dipilih).")
+                    except GhostVaultError as e:
+                        st.error(f"Gagal membuka brankas: {e}")
 
 
-# =========================================================
-# TAB 3: ROBUSTNESS ATTACK SIMULATOR
-# =========================================================
-with tabs[2]:
-    st.subheader("3. Simulator Uji Ketahanan Manipulasi Citra (Robustness Attacks)")
-    
-    current_test_img = st.session_state.last_stego_wm
-    if current_test_img is None:
-        st.warning("⚠️ Jalankan proses penyisipan pada Tab 1 terlebih dahulu untuk menguji simulasi serangan.")
-    else:
-        att_type = st.selectbox(
-            "Pilih Jenis Serangan Manipulasi / Gangguan Kanal:",
-            [
-                "JPEG Compression",
-                "Additive Gaussian Noise",
-                "Salt & Pepper Noise",
-                "Cropping (Pemotongan Sebagian Citra)",
-                "Median Filtering",
-                "Gaussian Blur",
-            ],
-            key="att_type_select"
-        )
+# =============================================================================
+# TAB 3: FORENSIC & STEGANALYSIS AUDIT
+# =============================================================================
+with tab_audit:
+    st.header("🔬 Audit Keamanan Forensik & Steganalisis")
+    st.write(
+        "Lakukan audit kuantitatif untuk menguji resistensi citra terhadap analisis statistik steganografi: "
+        "Uji Chi-Square ($\chi^2$), rasio entropi bitplane LSB, serta inspeksi residual perbesaran $25\\times$."
+    )
 
-        col_p, col_prev = st.columns([1, 2])
-        attacked_image = None
+    col_a1, col_a2 = st.columns(2)
+    with col_a1:
+        audit_carrier_file = st.file_uploader("Unggah Citra yang Diuji (Carrier):", type=["png", "jpg"], key="audit_carrier")
+    with col_a2:
+        audit_cover_file = st.file_uploader("Unggah Citra Pembanding Asli (Opsional):", type=["png", "jpg"], key="audit_cover")
 
-        with col_p:
-            if att_type == "JPEG Compression":
-                q_factor = st.slider("Quality Factor (Q)", 10, 95, 50, step=5, key="q_slider")
-                attacked_image = attack_jpeg_compression(current_test_img, q_factor)
-            elif att_type == "Additive Gaussian Noise":
-                var_val = st.slider("Variance Noise (σ²)", 0.001, 0.05, 0.01, step=0.002, key="var_slider")
-                attacked_image = attack_gaussian_noise(current_test_img, 0.0, var_val)
-            elif att_type == "Salt & Pepper Noise":
-                prob_val = st.slider("Density Probabilitas (p)", 0.005, 0.10, 0.02, step=0.005, key="sp_slider")
-                attacked_image = attack_salt_pepper(current_test_img, prob_val)
-            elif att_type == "Cropping (Pemotongan Sebagian Citra)":
-                crop_ratio = st.slider("Rasio Luas Crop", 0.05, 0.40, 0.20, step=0.05, key="crop_slider")
-                crop_pos = st.selectbox("Posisi Potong:", ["center", "top_left", "bottom_right"], key="crop_pos_sel")
-                attacked_image = attack_cropping(current_test_img, crop_ratio, crop_pos)
-            elif att_type == "Median Filtering":
-                k_size = st.selectbox("Ukuran Kernel:", [3, 5, 7], key="med_k_sel")
-                attacked_image = attack_median_filter(current_test_img, k_size)
-            elif att_type == "Gaussian Blur":
-                radius_val = st.slider("Blur Radius", 0.5, 3.0, 1.0, step=0.5, key="blur_r_slider")
-                attacked_image = attack_gaussian_blur(current_test_img, radius_val)
+    audit_btn = st.button("🔍 Jalankan Audit Forensik Menyeluruh", type="primary")
 
-        with col_prev:
-            st.image(attacked_image, caption=f"Citra Pasca Serangan ({att_type})", use_container_width=True)
+    if audit_btn:
+        if audit_carrier_file is None:
+            st.error("Silakan unggah citra pembawa yang ingin diaudit.")
+        else:
+            with st.spinner("Menjalankan kalkulasi matriks statistik dan uji Chi-Square..."):
+                c_arr = np.array(Image.open(audit_carrier_file).convert("RGB"))
+                cv_arr = np.array(Image.open(audit_cover_file).convert("RGB")) if audit_cover_file else None
 
-        if st.session_state.last_cover is not None:
-            psnr_att = calculate_psnr(st.session_state.last_cover, attacked_image)
-            ssim_att = calculate_ssim(st.session_state.last_cover, attacked_image)
-            st.write(f"📊 Kualitas Citra Pasca Serangan: **PSNR: {psnr_att:.2f} dB** | **SSIM: {ssim_att:.4f}**")
+                report = run_full_audit(cv_arr, c_arr)
 
-        if st.button("🧪 Uji Ketahanan Pasca Serangan", key="btn_test_attack"):
-            pipeline = DualDomainPipeline(watermark_alpha=alpha_val, watermark_subband=subband_choice)
-            extract_res = pipeline.run_dual_extraction(
-                stego_watermarked_image=attacked_image,
-                watermark_key=st.session_state.last_key,
-                original_watermark_logo=st.session_state.last_wm_logo,
-                stego_passphrase=default_passphrase,
-                original_payload=st.session_state.last_payload,
-            )
+                r_col1, r_col2, r_col3, r_col4 = st.columns(4)
+                with r_col1:
+                    score = report["stealth_score"]
+                    st.metric("Skor Keselamatan Stealth", f"{score}%")
+                with r_col2:
+                    p_val = report["chi2_p_value"]
+                    st.metric("Chi-Square p-value", f"{p_val:.4f}")
+                with r_col3:
+                    det_conf = report["detection_confidence"] * 100.0
+                    st.metric("Confidence Terdeteksi", f"{det_conf:.1f}%")
+                with r_col4:
+                    badge = "status-badge-secure" if report["is_secure"] else "status-badge-warning"
+                    st.markdown(f"<div style='margin-top:16px;'><span class='{badge}'>{report['verdict']}</span></div>", unsafe_allow_html=True)
 
-            col_res_a, col_res_b = st.columns(2)
-            with col_res_a:
-                st.markdown("#### Ketahanan Watermark (DWT-SVD)")
-                st.image(extract_res.extracted_watermark, caption=f"Logo Terpulihkan (NC: {extract_res.watermark_nc:.4f})", width=140)
-                if extract_res.watermark_nc >= 0.85:
-                    st.success(f"🛡️ Watermark Tahan Serangan! (NC: **{extract_res.watermark_nc:.4f}** ≥ 0.85)")
-                else:
-                    st.warning(f"⚠️ Watermark Mengalami Degradasi (NC: {extract_res.watermark_nc:.4f})")
+                if cv_arr is not None:
+                    st.markdown("---")
+                    st.subheader("Visual Residual Perbesaran 25×")
+                    residual = compute_amplified_residual(cv_arr, c_arr, factor=25.0)
 
-            with col_res_b:
-                st.markdown("#### Karakteristik Steganografi (Fragility)")
-                if extract_res.stego_success:
-                    st.success(f"🔓 Pesan Rahasia Bertahan Utuh! (BER: {extract_res.stego_ber:.1f}%)")
-                else:
-                    st.info(
-                        "🛡️ Sifat Fragile Terkonfirmasi: Pesan rahasia terlindungi dari modifikasi. "
-                        "Deteksi kerusakan memicu penolakan AES-GCM (Anti-Tampering)."
-                    )
+                    v_col1, v_col2, v_col3 = st.columns(3)
+                    with v_col1:
+                        st.image(cv_arr, caption="Original Cover", use_container_width=True)
+                    with v_col2:
+                        st.image(c_arr, caption="Stego Carrier", use_container_width=True)
+                    with v_col3:
+                        st.image(residual, caption="Amplified Residual (25x)", use_container_width=True)
+
+                st.markdown("---")
+                st.subheader("Entropi Distribusi LSB per Channel")
+                st.json(report["lsb_entropy"])
