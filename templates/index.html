@@ -4,26 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GhostShare — Deniable Covert Data Vault</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icon.png">
   <style>
     :root {
-      --bg-deep: #07090e;
-      --bg-surface: #0e131f;
-      --bg-card: #141c2e;
-      --bg-card-hover: #1a253c;
-      --border-subtle: #1e293b;
-      --border-focus: #06b6d4;
-      --cyan-primary: #06b6d4;
-      --cyan-glow: rgba(6, 182, 212, 0.25);
-      --emerald-secure: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.25);
-      --amber-decoy: #f59e0b;
-      --amber-glow: rgba(245, 158, 11, 0.25);
-      --rose-danger: #f43f5e;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      /* Base surface hierarchy */
+      --bg-base: #101318;
+      --bg-panel: #171c24;
+      --bg-surface-elevated: #1f2532;
+      --bg-well: #0c0e12;
+
+      /* Structural framing & borders */
+      --border-subtle: #242c3b;
+      --border-medium: #343e52;
+      --border-strong: #495773;
+
+      /* Typography colors */
+      --text-primary: #e6ebf2;
+      --text-muted: #8895a7;
+      --text-dim: #5c687a;
+
+      /* Calibrated signal palette */
+      --accent-amber: #e59e38;
+      --accent-amber-hover: #f0aa46;
+      --accent-amber-subtle: rgba(229, 158, 56, 0.08);
+      --accent-amber-border: rgba(229, 158, 56, 0.3);
+
+      --state-verified: #3eb882;
+      --state-verified-hover: #48cf94;
+      --state-verified-subtle: rgba(62, 184, 130, 0.09);
+      --state-verified-border: rgba(62, 184, 130, 0.32);
+
+      --state-alert: #d9534f;
+      --state-alert-subtle: rgba(217, 83, 79, 0.09);
+      --state-alert-border: rgba(217, 83, 79, 0.35);
+
+      /* Typography */
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+
+      /* Radii & geometry */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
     }
 
     * {
@@ -33,120 +57,144 @@
     }
 
     body {
-      background-color: var(--bg-deep);
-      color: var(--text-main);
+      background-color: var(--bg-base);
+      color: var(--text-primary);
       font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Navigation Bar */
+    /* ----------------------------------------------------------------------- */
+    /* Header & Navigation Bar                                                 */
+    /* ----------------------------------------------------------------------- */
     header {
-      background: rgba(14, 19, 31, 0.85);
-      backdrop-filter: blur(12px);
+      background: var(--bg-panel);
       border-bottom: 1px solid var(--border-subtle);
       position: sticky;
       top: 0;
       z-index: 50;
-      padding: 0.75rem 1.5rem;
+      padding: 0.85rem 1.75rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
-    .brand-icon {
-      font-size: 1.5rem;
-      filter: drop-shadow(0 0 8px var(--cyan-primary));
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .brand-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .brand-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
     }
 
     .brand-subtitle {
       font-size: 0.75rem;
       color: var(--text-muted);
-      font-family: var(--font-mono);
     }
 
     .system-status {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      color: var(--emerald-secure);
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
+      gap: 0.55rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--radius-sm);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--emerald-secure);
-      box-shadow: 0 0 8px var(--emerald-secure);
-      animation: pulse 2s infinite;
+      background: var(--state-verified);
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.9); }
-    }
-
-    /* Tab Controls */
+    /* Tab Switcher */
     .tab-bar {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.25rem;
       border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
-      padding: 0 1.5rem;
+      background: var(--bg-panel);
+      padding: 0 1.75rem;
+      overflow-x: auto;
     }
 
     .tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.85rem 1.25rem;
-      font-size: 0.95rem;
-      font-weight: 600;
+      padding: 0.85rem 1.15rem;
+      font-size: 0.88rem;
+      font-weight: 500;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
       border-bottom: 2px solid transparent;
-      transition: all 0.2s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
     }
 
     .tab-btn:hover {
-      color: var(--text-main);
+      color: var(--text-primary);
     }
 
     .tab-btn.active {
-      color: var(--cyan-primary);
-      border-bottom-color: var(--cyan-primary);
-      background: rgba(6, 182, 212, 0.05);
+      color: var(--text-primary);
+      border-bottom-color: var(--accent-amber);
+      font-weight: 600;
     }
 
-    /* Main Container */
+    .tab-btn svg {
+      color: var(--text-dim);
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn.active svg {
+      color: var(--accent-amber);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Main Layout Containers                                                  */
+    /* ----------------------------------------------------------------------- */
     main {
       flex: 1;
-      max-width: 1280px;
+      max-width: 1260px;
       width: 100%;
       margin: 0 auto;
-      padding: 2rem 1.5rem;
+      padding: 2rem 1.75rem;
     }
 
     .tab-content {
@@ -155,167 +203,198 @@
 
     .tab-content.active {
       display: block;
-      animation: fadeIn 0.25s ease-in-out;
+      animation: fadeIn 0.18s ease-out;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
+      from { opacity: 0; transform: translateY(3px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Cards & Layout */
+    /* Asymmetric Grid for Tab 1 */
+    .grid-pack {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
-    @media (max-width: 900px) {
-      .grid-2 { grid-template-columns: 1fr; }
+    @media (max-width: 960px) {
+      .grid-pack, .grid-2 {
+        grid-template-columns: 1fr;
+      }
     }
 
-    .card {
-      background: var(--bg-card);
+    /* Panels & Instrument Boxes */
+    .panel {
+      background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      padding: 1.4rem;
       position: relative;
     }
 
-    .card-header {
+    .panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 1.25rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
+    .panel-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.55rem;
+      letter-spacing: -0.01em;
     }
 
-    .step-badge {
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--cyan-primary);
-      font-size: 0.75rem;
+    .panel-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
       padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      border-radius: var(--radius-sm);
     }
 
-    /* Preset Cover Selector */
+    /* ----------------------------------------------------------------------- */
+    /* Presets Chips                                                           */
+    /* ----------------------------------------------------------------------- */
+    .preset-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+      display: block;
+    }
+
     .preset-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      gap: 0.4rem;
+      margin-bottom: 1.15rem;
     }
 
     .preset-chip {
-      background: var(--bg-surface);
+      background: var(--bg-surface-elevated);
       border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
       cursor: pointer;
       transition: all 0.15s ease;
+      font-family: var(--font-mono);
     }
 
     .preset-chip:hover {
-      border-color: var(--cyan-primary);
-      color: var(--text-main);
+      border-color: var(--border-medium);
+      color: var(--text-primary);
     }
 
     .preset-chip.active {
-      background: rgba(6, 182, 212, 0.15);
-      border-color: var(--cyan-primary);
-      color: var(--cyan-primary);
+      background: var(--accent-amber-subtle);
+      border-color: var(--accent-amber-border);
+      color: var(--accent-amber);
       font-weight: 600;
     }
 
-    /* Dropzones */
+    /* ----------------------------------------------------------------------- */
+    /* Dropzones                                                               */
+    /* ----------------------------------------------------------------------- */
     .dropzone {
-      border: 2px dashed var(--border-subtle);
-      border-radius: 10px;
-      background: rgba(14, 19, 31, 0.5);
-      padding: 1.75rem 1.25rem;
+      border: 1px dashed var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-well);
+      padding: 1.6rem 1.25rem;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
     }
 
     .dropzone:hover, .dropzone.dragover {
-      border-color: var(--cyan-primary);
-      background: rgba(6, 182, 212, 0.05);
+      border-color: var(--accent-amber);
+      background: rgba(229, 158, 56, 0.04);
     }
 
     .dropzone-icon {
-      font-size: 2rem;
       margin-bottom: 0.5rem;
-      color: var(--text-muted);
+      color: var(--text-dim);
+      display: flex;
+      justify-content: center;
     }
 
     .dropzone-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-main);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-primary);
     }
 
     .dropzone-desc {
-      font-size: 0.8rem;
-      color: var(--text-dim);
-      margin-top: 0.25rem;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
     }
 
     .file-input {
       display: none;
     }
 
+    /* Selected File Item */
     .file-preview {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.85rem;
       margin-top: 0.75rem;
     }
 
     .file-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       overflow: hidden;
     }
 
     .file-badge {
-      background: #1e293b;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 0.18rem 0.45rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
       font-family: var(--font-mono);
-      color: var(--cyan-primary);
+      color: var(--accent-amber);
+      font-weight: 600;
     }
 
     .file-name {
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 280px;
     }
 
     .file-size {
       font-size: 0.75rem;
       color: var(--text-muted);
+      font-family: var(--font-mono);
     }
 
     .btn-remove {
@@ -323,67 +402,84 @@
       border: none;
       color: var(--text-dim);
       cursor: pointer;
-      font-size: 1.1rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      border-radius: var(--radius-sm);
+      transition: color 0.15s ease;
     }
 
     .btn-remove:hover {
-      color: var(--rose-danger);
+      color: var(--state-alert);
     }
 
-    /* Capacity Progress Gauge */
+    /* ----------------------------------------------------------------------- */
+    /* Capacity Telemetry Meter                                                */
+    /* ----------------------------------------------------------------------- */
     .capacity-box {
       margin-top: 1.25rem;
-      background: var(--bg-surface);
+      background: var(--bg-well);
       border: 1px solid var(--border-subtle);
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       padding: 1rem;
     }
 
     .capacity-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
+      align-items: baseline;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
     }
 
     .capacity-val {
-      font-weight: 700;
-      color: var(--cyan-primary);
+      font-weight: 600;
+      color: var(--text-primary);
       font-family: var(--font-mono);
+      font-size: 0.82rem;
     }
 
     .progress-bar-bg {
-      height: 8px;
-      background: #1e293b;
-      border-radius: 4px;
+      height: 6px;
+      background: var(--bg-surface-elevated);
+      border-radius: 3px;
       overflow: hidden;
+      display: flex;
       position: relative;
     }
 
     .progress-bar-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--cyan-primary), #3b82f6);
-      transition: width 0.3s ease;
-      border-radius: 4px;
+      background: var(--accent-amber);
+      transition: width 0.25s ease;
     }
 
     .progress-bar-fill.warning {
-      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      background: var(--state-alert);
     }
 
-    /* Form Inputs & Password */
+    .capacity-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Inputs & Form Groups                                                    */
+    /* ----------------------------------------------------------------------- */
     .input-group {
-      margin-top: 1rem;
+      margin-top: 1.15rem;
     }
 
     .input-label {
       display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.8rem;
+      font-weight: 500;
       color: var(--text-muted);
       margin-bottom: 0.4rem;
     }
@@ -396,19 +492,19 @@
 
     .text-input {
       width: 100%;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      color: #fff;
-      padding: 0.75rem 1rem;
-      font-size: 0.95rem;
+      background: var(--bg-well);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 0.65rem 0.85rem;
+      font-size: 0.88rem;
+      font-family: inherit;
       transition: border-color 0.15s ease;
     }
 
     .text-input:focus {
       outline: none;
-      border-color: var(--cyan-primary);
-      box-shadow: 0 0 0 3px var(--cyan-glow);
+      border-color: var(--accent-amber);
     }
 
     .btn-eye {
@@ -416,24 +512,32 @@
       right: 0.75rem;
       background: transparent;
       border: none;
-      color: var(--text-muted);
+      color: var(--text-dim);
       cursor: pointer;
-      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s ease;
     }
 
-    /* Plausible Deniability Zone */
+    .btn-eye:hover {
+      color: var(--text-primary);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Duress Decoy Card (Plausible Deniability)                               */
+    /* ----------------------------------------------------------------------- */
     .denial-box {
-      margin-top: 1.5rem;
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      background: rgba(245, 158, 11, 0.03);
-      border-radius: 10px;
-      padding: 1.25rem;
-      transition: all 0.2s ease;
+      margin-top: 1.35rem;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-well);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      transition: border-color 0.15s ease;
     }
 
     .denial-box.active {
-      border-color: var(--amber-decoy);
-      box-shadow: 0 0 15px var(--amber-glow);
+      border-color: var(--accent-amber-border);
+      background: var(--accent-amber-subtle);
     }
 
     .toggle-row {
@@ -446,190 +550,240 @@
     .toggle-info {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.65rem;
     }
 
     .toggle-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--amber-decoy);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .toggle-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
-      height: 24px;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
     }
 
-    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
 
     .slider {
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155;
-      transition: .3s;
-      border-radius: 24px;
+      background-color: var(--bg-surface-elevated);
+      border: 1px solid var(--border-medium);
+      transition: .2s;
+      border-radius: 20px;
     }
 
     .slider:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .3s;
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-muted);
+      transition: .2s;
       border-radius: 50%;
     }
 
     input:checked + .slider {
-      background-color: var(--amber-decoy);
+      background-color: var(--accent-amber);
+      border-color: var(--accent-amber);
     }
 
     input:checked + .slider:before {
-      transform: translateX(20px);
+      transform: translateX(16px);
+      background-color: #101318;
     }
 
     .denial-content {
       display: none;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid rgba(245, 158, 11, 0.2);
+      border-top: 1px solid var(--border-subtle);
     }
 
     .denial-content.show {
       display: block;
-      animation: fadeIn 0.2s ease;
+      animation: fadeIn 0.18s ease;
     }
 
-    .explainer-badge {
-      background: rgba(245, 158, 11, 0.1);
-      border-left: 3px solid var(--amber-decoy);
-      padding: 0.6rem 0.8rem;
-      font-size: 0.8rem;
-      color: #fde68a;
-      border-radius: 0 6px 6px 0;
+    .note-box {
+      background: var(--bg-surface-elevated);
+      border-left: 3px solid var(--accent-amber);
+      padding: 0.6rem 0.85rem;
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
       margin-bottom: 1rem;
+      line-height: 1.45;
     }
 
-    /* Primary Action Buttons */
-    .btn-primary {
+    .note-box strong {
+      color: var(--text-primary);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Action Buttons                                                          */
+    /* ----------------------------------------------------------------------- */
+    .btn-action {
       width: 100%;
-      background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
-      color: #fff;
+      background: var(--accent-amber);
+      color: #101318;
       border: none;
-      border-radius: 10px;
-      padding: 1rem;
-      font-size: 1.05rem;
-      font-weight: 700;
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 1rem;
+      font-size: 0.92rem;
+      font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      margin-top: 1.5rem;
-      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
-      transition: all 0.2s ease;
+      gap: 0.5rem;
+      margin-top: 1.35rem;
+      transition: background-color 0.15s ease, opacity 0.15s ease;
     }
 
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    .btn-action:hover {
+      background: var(--accent-amber-hover);
     }
 
-    .btn-primary:active {
-      transform: translateY(0);
+    .btn-action:active {
+      transform: translateY(1px);
     }
 
-    .btn-primary:disabled {
-      background: #334155;
-      box-shadow: none;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .btn-emerald {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
-    }
-
-    .btn-emerald:hover {
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
-    }
-
-    /* Result Modal / Cards */
-    .result-card {
-      margin-top: 1.5rem;
-      background: #0f172a;
+    .btn-action:disabled {
+      background: var(--bg-surface-elevated);
+      color: var(--text-dim);
       border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 1.5rem;
-      display: none;
-      animation: fadeIn 0.3s ease;
+      cursor: not-allowed;
     }
 
-    .result-card.show {
-      display: block;
+    .btn-verified {
+      background: var(--state-verified);
+      color: #0b1510;
     }
 
-    .result-badge {
+    .btn-verified:hover {
+      background: var(--state-verified-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
+      padding: 0.75rem 1.15rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--emerald-secure);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 0.3rem 0.8rem;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 700;
+      gap: 0.5rem;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Diagnostic Results Telemetry                                            */
+    /* ----------------------------------------------------------------------- */
+    .result-panel {
+      margin-top: 1.5rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.4rem;
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .result-panel.show {
+      display: block;
     }
 
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin: 1.25rem 0;
+      gap: 0.85rem;
+      margin: 1.15rem 0;
     }
 
     @media (max-width: 768px) {
       .metric-grid { grid-template-columns: 1fr 1fr; }
     }
 
-    .stat-pill {
-      background: var(--bg-surface);
+    .stat-cell {
+      background: var(--bg-well);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.9rem;
     }
 
     .stat-title {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
     .stat-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-primary);
       font-family: var(--font-mono);
-      margin-top: 0.2rem;
+      margin-top: 0.25rem;
     }
 
-    /* Interactive Comparison Slider */
+    .verdict-tag {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    .verdict-tag.secure {
+      background: var(--state-verified-subtle);
+      color: var(--state-verified);
+      border: 1px solid var(--state-verified-border);
+    }
+
+    .verdict-tag.alert {
+      background: var(--state-alert-subtle);
+      color: var(--state-alert);
+      border: 1px solid var(--state-alert-border);
+    }
+
+    /* ----------------------------------------------------------------------- */
+    /* Interactive Optical Comparator (Tab 3)                                  */
+    /* ----------------------------------------------------------------------- */
     .comparator-wrap {
       position: relative;
       width: 100%;
-      height: 380px;
-      border-radius: 10px;
+      height: 420px;
+      border-radius: var(--radius-sm);
       overflow: hidden;
       user-select: none;
-      background: #000;
+      background: #080a0e;
+      border: 1px solid var(--border-subtle);
+      margin-top: 0.75rem;
     }
 
     .comparator-img {
@@ -638,16 +792,30 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
+      pointer-events: none;
     }
 
-    .comparator-overlay {
+    /* The overlay image is clipped dynamically via clip-path */
+    .comparator-overlay-img {
       position: absolute;
       top: 0; left: 0;
+      width: 100%;
       height: 100%;
-      width: 50%;
-      overflow: hidden;
-      border-right: 2px solid var(--cyan-primary);
-      box-shadow: 2px 0 10px var(--cyan-glow);
+      object-fit: contain;
+      pointer-events: none;
+      clip-path: inset(0 calc(100% - var(--split-pos, 50%)) 0 0);
+    }
+
+    .comparator-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--split-pos, 50%);
+      width: 2px;
+      background: var(--accent-amber);
+      pointer-events: none;
+      transform: translateX(-50%);
+      box-shadow: 0 0 8px rgba(0,0,0,0.8);
     }
 
     .comparator-slider {
@@ -659,52 +827,63 @@
       opacity: 0;
       cursor: ew-resize;
       z-index: 10;
+      margin: 0;
     }
 
-    .slider-handle-tag {
+    .comparator-tag {
       position: absolute;
       top: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 0.25rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #fff;
+      background: rgba(16, 19, 24, 0.85);
+      border: 1px solid var(--border-subtle);
+      padding: 0.25rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      pointer-events: none;
     }
 
     .tag-left { left: 10px; }
     .tag-right { right: 10px; }
 
-    /* Toast Notification */
+    /* ----------------------------------------------------------------------- */
+    /* Toast System & Utilities                                                */
+    /* ----------------------------------------------------------------------- */
     .toast {
       position: fixed;
       bottom: 1.5rem;
       right: 1.5rem;
-      background: #1e293b;
-      border: 1px solid var(--border-subtle);
-      color: #fff;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-medium);
+      border-left: 3px solid var(--accent-amber);
+      color: var(--text-primary);
+      padding: 0.75rem 1.15rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       z-index: 100;
       display: none;
-      animation: slideUp 0.25s ease;
+      animation: slideUp 0.18s ease-out;
+      max-width: 380px;
+    }
+
+    .toast.error {
+      border-left-color: var(--state-alert);
     }
 
     @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
+      from { transform: translateY(12px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
 
     .spinner {
       display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(0, 0, 0, 0.25);
       border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 0.8s linear infinite;
+      border-top-color: currentColor;
+      animation: spin 0.7s linear infinite;
     }
 
     @keyframes spin {
@@ -714,53 +893,78 @@
 </head>
 <body>
 
-  <!-- Top Bar -->
+  <!-- ===================================================================== -->
+  <!-- Header                                                                -->
+  <!-- ===================================================================== -->
   <header>
     <div class="brand">
-      <div class="brand-icon">🛡️</div>
+      <div class="brand-mark">
+        <img src="/static/favicon.png" alt="GhostShare emblem" class="brand-logo-img">
+      </div>
       <div>
         <div class="brand-title">GHOSTSHARE VAULT</div>
-        <div class="brand-subtitle">Deniable Covert Data Vault v2.0</div>
+        <div class="brand-subtitle">Deniable Steganographic Data Vault</div>
       </div>
     </div>
     <div class="system-status">
       <div class="status-dot"></div>
-      <span>Core Engine Active (AES-256-GCM + LSB Matching)</span>
+      <span>Engine: AES-256-GCM + PRNG LSB (&plusmn;1)</span>
     </div>
   </header>
 
-  <!-- Navigation Tab Bar -->
+  <!-- ===================================================================== -->
+  <!-- Navigation Switcher                                                   -->
+  <!-- ===================================================================== -->
   <nav class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('pack')">
-      <span>🗄️</span> 1. Pack Vault
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      1. Pack carrier
     </button>
     <button class="tab-btn" onclick="switchTab('unpack')">
-      <span>🔓</span> 2. Unpack Vault
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+      </svg>
+      2. Extract payload
     </button>
     <button class="tab-btn" onclick="switchTab('audit')">
-      <span>🔬</span> 3. Forensic Studio
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      3. Forensic studio
     </button>
   </nav>
 
-  <!-- Main Content -->
+  <!-- ===================================================================== -->
+  <!-- Main Workspace                                                        -->
+  <!-- ===================================================================== -->
   <main>
 
-    <!-- ================================================================= -->
-    <!-- TAB 1: PACK VAULT -->
-    <!-- ================================================================= -->
+    <!-- ------------------------------------------------------------------- -->
+    <!-- TAB 1: PACK CARRIER                                                 -->
+    <!-- ------------------------------------------------------------------- -->
     <div id="tab-pack" class="tab-content active">
-      <div class="grid-2">
+      <div class="grid-pack">
 
-        <!-- Column 1: Carrier Cover Selection -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span>🖼️</span> Step 1: Select Cover Carrier
+        <!-- Column 1: Carrier Vessel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+              Carrier image selection
             </div>
-            <span class="step-badge">STEP 1 / 3</span>
+            <span class="panel-tag">VESSEL</span>
           </div>
 
-          <label class="input-label">Quick Presets (or Upload Below):</label>
+          <label class="preset-label">Standard calibrated presets (or upload custom cover below):</label>
           <div class="preset-chips" id="preset-container">
             <div class="preset-chip active" onclick="selectPreset('Cover Sample (1024x1024)')">Cover Sample (1024px)</div>
             <div class="preset-chip" onclick="selectPreset('Lena (512x512)')">Lena (512px)</div>
@@ -771,13 +975,19 @@
 
           <!-- Cover Dropzone -->
           <div class="dropzone" id="cover-dropzone" onclick="document.getElementById('cover-file-input').click()">
-            <div class="dropzone-icon">📁</div>
-            <div class="dropzone-title">Upload Custom Cover Image</div>
-            <div class="dropzone-desc">Drag & drop or click (PNG / JPG supported)</div>
+            <div class="dropzone-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div class="dropzone-title">Drop custom cover image</div>
+            <div class="dropzone-desc">Lossless PNG or JPEG (24-bit RGB)</div>
             <input type="file" id="cover-file-input" class="file-input" accept="image/png,image/jpeg">
           </div>
 
-          <!-- File Preview -->
+          <!-- Cover Preview -->
           <div class="file-preview" id="cover-preview" style="display: none;">
             <div class="file-info">
               <span class="file-badge">COVER</span>
@@ -786,36 +996,54 @@
                 <div class="file-size" id="cover-dims">1024 x 1024 px</div>
               </div>
             </div>
-            <button class="btn-remove" onclick="resetCover()">✕</button>
+            <button class="btn-remove" onclick="resetCover()" title="Clear cover image">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
-          <!-- Dynamic Capacity Gauge -->
+          <!-- Dynamic Capacity Telemetry -->
           <div class="capacity-box">
             <div class="capacity-header">
-              <span>Payload Space Utilization:</span>
+              <span>Carrier payload allocation</span>
               <span class="capacity-val" id="capacity-text">0.0 KB / 383.9 KB (0.0%)</span>
             </div>
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" id="capacity-bar"></div>
             </div>
+            <div class="capacity-legend">
+              <span id="capacity-available-text">Available headroom: 383.9 KB</span>
+              <span id="capacity-mode-tag">Partition: Full</span>
+            </div>
           </div>
         </div>
 
-        <!-- Column 2: Secret Payload & Plausible Deniability -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span>🔐</span> Step 2: Encrypt & Conceal Payload
+        <!-- Column 2: Cryptographic Vault & Duress Protection -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Cryptographic vault
             </div>
-            <span class="step-badge">STEP 2 / 3</span>
+            <span class="panel-tag">PAYLOAD</span>
           </div>
 
-          <!-- Secret Payload Dropzone -->
-          <label class="input-label">Real Secret File (Any binary: PDF, ZIP, TXT, DOCX, KDBX):</label>
+          <!-- Secret File Dropzone -->
+          <label class="input-label">Secret payload (arbitrary binary: PDF, ZIP, TXT, DOCX, KDBX):</label>
           <div class="dropzone" id="secret-dropzone" onclick="document.getElementById('secret-file-input').click()">
-            <div class="dropzone-icon">📄</div>
-            <div class="dropzone-title">Drop Secret File Here</div>
-            <div class="dropzone-desc">Preserves original filename & extension</div>
+            <div class="dropzone-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="dropzone-title">Drop secret payload file</div>
+            <div class="dropzone-desc">Original filename and MIME metadata preserved</div>
             <input type="file" id="secret-file-input" class="file-input">
           </div>
 
@@ -827,25 +1055,34 @@
                 <div class="file-size" id="secret-size">0 KB</div>
               </div>
             </div>
-            <button class="btn-remove" onclick="resetSecret()">✕</button>
+            <button class="btn-remove" onclick="resetSecret()" title="Remove file">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           <div class="input-group">
-            <label class="input-label">Secret Passphrase (AES-256-GCM Key):</label>
+            <label class="input-label" for="secret-pass">Secret passphrase (AES-256-GCM key derivation):</label>
             <div class="password-wrap">
-              <input type="password" id="secret-pass" class="text-input" placeholder="Enter high-entropy secret passphrase">
-              <button type="button" class="btn-eye" onclick="togglePass('secret-pass')">👁️</button>
+              <input type="password" id="secret-pass" class="text-input" placeholder="Enter high-entropy secret key">
+              <button type="button" class="btn-eye" onclick="togglePass('secret-pass')" title="Toggle visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
           </div>
 
-          <!-- Plausible Deniability (Decoy Mode) Toggle Card -->
+          <!-- Plausible Deniability Card -->
           <div class="denial-box" id="denial-card">
             <div class="toggle-row" onclick="toggleDeniability()">
               <div class="toggle-info">
-                <span>🛡️</span>
                 <div>
-                  <div class="toggle-title">Plausible Deniability (Decoy Mode)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">Duress & Anti-Coercion Protection</div>
+                  <div class="toggle-title">Duress partition (Decoy mode)</div>
+                  <div class="toggle-desc">Plausible deniability against forced key disclosure</div>
                 </div>
               </div>
               <label class="switch" onclick="event.stopPropagation()">
@@ -855,14 +1092,19 @@
             </div>
 
             <div class="denial-content" id="denial-body">
-              <div class="explainer-badge">
-                💡 <strong>Rubber-Hose Protection:</strong> If forced to surrender your password, give the <strong>Decoy Passphrase</strong>. It unlocks only the innocent decoy file below. The real secret payload remains completely invisible.
+              <div class="note-box">
+                <strong>Anti-coercion mechanism:</strong> Under forced disclosure, surrender the <strong>Decoy passphrase</strong>. It unlocks only the innocent decoy file below. The existence of the primary vault remains mathematically unprovable.
               </div>
 
               <div class="dropzone" id="decoy-dropzone" onclick="document.getElementById('decoy-file-input').click()">
-                <div class="dropzone-icon">🧾</div>
-                <div class="dropzone-title">Drop Innocent Decoy File</div>
-                <div class="dropzone-desc">e.g. grocery_list.txt, recipes, public memo</div>
+                <div class="dropzone-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="dropzone-title">Drop innocent decoy document</div>
+                <div class="dropzone-desc">e.g. personal notes, recipes, public memo</div>
                 <input type="file" id="decoy-file-input" class="file-input">
               </div>
 
@@ -874,88 +1116,124 @@
                     <div class="file-size" id="decoy-size">0 KB</div>
                   </div>
                 </div>
-                <button class="btn-remove" onclick="resetDecoy()">✕</button>
+                <button class="btn-remove" onclick="resetDecoy()" title="Remove decoy">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
               </div>
 
               <div class="input-group">
-                <label class="input-label">Decoy Passphrase (Surrender Key):</label>
+                <label class="input-label" for="decoy-pass">Decoy passphrase (Surrender key):</label>
                 <div class="password-wrap">
-                  <input type="password" id="decoy-pass" class="text-input" placeholder="Must be different from Secret Passphrase">
-                  <button type="button" class="btn-eye" onclick="togglePass('decoy-pass')">👁️</button>
+                  <input type="password" id="decoy-pass" class="text-input" placeholder="Must differ from secret passphrase">
+                  <button type="button" class="btn-eye" onclick="togglePass('decoy-pass')" title="Toggle visibility">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Lock & Pack Button -->
-          <button class="btn-primary" id="btn-pack" onclick="executePack()">
-            <span>🔒</span> Lock & Pack Covert Vault
+          <!-- Lock Button -->
+          <button class="btn-action" id="btn-pack" onclick="executePack()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Seal and pack carrier
           </button>
         </div>
 
       </div>
 
       <!-- Pack Result Container -->
-      <div class="result-card" id="pack-result">
-        <div class="card-header">
-          <div class="card-title">
-            <span>🎉</span> Carrier Vault Packed Successfully
+      <div class="result-panel" id="pack-result">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--state-verified)" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Carrier packed successfully
           </div>
-          <span class="result-badge" id="pack-verdict-badge">CLEAN / STEALTH SECURE</span>
+          <span class="verdict-tag secure" id="pack-verdict-badge">Clean / Stealth secure</span>
         </div>
 
         <div class="metric-grid">
-          <div class="stat-pill">
-            <div class="stat-title">Visual Fidelity (PSNR)</div>
+          <div class="stat-cell">
+            <div class="stat-title">Visual fidelity (PSNR)</div>
             <div class="stat-value" id="res-psnr">81.5 dB</div>
           </div>
-          <div class="stat-pill">
-            <div class="stat-title">Structural SSIM</div>
+          <div class="stat-cell">
+            <div class="stat-title">Structural similarity (SSIM)</div>
             <div class="stat-value" id="res-ssim">1.0000</div>
           </div>
-          <div class="stat-pill">
-            <div class="stat-title">Stealth Safety Score</div>
+          <div class="stat-cell">
+            <div class="stat-title">Stealth safety score</div>
             <div class="stat-value" id="res-stealth">100.0%</div>
           </div>
-          <div class="stat-pill">
-            <div class="stat-title">Storage Mode</div>
-            <div class="stat-value" id="res-mode">DUAL</div>
+          <div class="stat-cell">
+            <div class="stat-title">Storage partition</div>
+            <div class="stat-value" id="res-mode">Dual</div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
-          <a id="btn-download-carrier" class="btn-primary btn-emerald" style="margin-top: 0; text-decoration: none;" download="ghost_carrier.png">
-            <span>⬇️</span> Download Carrier (ghost_carrier.png)
+        <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 1.25rem; flex-wrap: wrap;">
+          <a id="btn-download-carrier" class="btn-secondary btn-verified" download="ghost_carrier.png">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download carrier image (.png)
           </a>
-          <button class="btn-primary" style="margin-top: 0; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-main);" onclick="previewCarrier()">
-            <span>👁️</span> Inspect in Studio
+          <button class="btn-secondary" onclick="previewCarrier()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Inspect in forensic studio
           </button>
         </div>
       </div>
     </div>
 
 
-    <!-- ================================================================= -->
-    <!-- TAB 2: UNPACK VAULT -->
-    <!-- ================================================================= -->
+    <!-- ------------------------------------------------------------------- -->
+    <!-- TAB 2: UNPACK VAULT                                                 -->
+    <!-- ------------------------------------------------------------------- -->
     <div id="tab-unpack" class="tab-content">
-      <div style="max-width: 680px; margin: 0 auto;">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span>🔓</span> Unlock & Extract Hidden Vault
+      <div style="max-width: 660px; margin: 0 auto;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+              </svg>
+              Unlock and extract covert vault
             </div>
-            <span class="step-badge">ZERO-KEY FOOTPRINT</span>
+            <span class="panel-tag">ZERO AUXILIARY KEY</span>
           </div>
 
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-            Upload your carrier image and enter your password. No auxiliary <code style="font-family: var(--font-mono); color: var(--cyan-primary);">.key</code> file is required. The system automatically identifies whether your password belongs to the real or decoy vault.
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+            Zero auxiliary footprint: the carrier image contains both the encrypted data and cryptographic authentication proof. The passphrase determines whether the primary vault or the decoy vault is unlocked.
           </p>
 
           <div class="dropzone" id="unpack-dropzone" onclick="document.getElementById('carrier-file-input').click()">
-            <div class="dropzone-icon">🖼️</div>
-            <div class="dropzone-title">Drop Carrier Image (PNG)</div>
-            <div class="dropzone-desc">The image containing hidden data</div>
+            <div class="dropzone-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
+            <div class="dropzone-title">Drop carrier image (PNG)</div>
+            <div class="dropzone-desc">The image containing concealed payload</div>
             <input type="file" id="carrier-file-input" class="file-input" accept="image/png">
           </div>
 
@@ -967,134 +1245,181 @@
                 <div class="file-size" id="carrier-size">0 KB</div>
               </div>
             </div>
-            <button class="btn-remove" onclick="resetCarrier()">✕</button>
+            <button class="btn-remove" onclick="resetCarrier()" title="Remove carrier">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           <div class="input-group">
-            <label class="input-label">Passphrase (Secret or Decoy):</label>
+            <label class="input-label" for="unpack-pass">Passphrase (Secret or Decoy key):</label>
             <div class="password-wrap">
-              <input type="password" id="unpack-pass" class="text-input" placeholder="Enter passphrase to unlock">
-              <button type="button" class="btn-eye" onclick="togglePass('unpack-pass')">👁️</button>
+              <input type="password" id="unpack-pass" class="text-input" placeholder="Enter passphrase to authenticate">
+              <button type="button" class="btn-eye" onclick="togglePass('unpack-pass')" title="Toggle visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
           </div>
 
-          <button class="btn-primary btn-emerald" id="btn-unpack" onclick="executeUnpack()">
-            <span>🔓</span> Authenticate & Unlock Vault
+          <button class="btn-action btn-verified" id="btn-unpack" onclick="executeUnpack()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+            Authenticate and unlock vault
           </button>
         </div>
 
         <!-- Extraction Result Card -->
-        <div class="result-card" id="unpack-result">
-          <div class="card-header">
-            <div class="card-title">
-              <span>📄</span> Unlocked Document Ready
+        <div class="result-panel" id="unpack-result">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--state-verified)" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Payload authenticated
             </div>
-            <span class="result-badge" id="unpack-slot-badge">ODD / SECRET</span>
+            <span class="verdict-tag secure" id="unpack-slot-badge">Slot: Secret</span>
           </div>
 
           <div class="file-preview" style="margin: 1rem 0;">
             <div class="file-info">
               <span class="file-badge" id="unpacked-mime">PDF</span>
               <div>
-                <div class="file-name" id="unpacked-name" style="font-size: 1.05rem;">classified_report.pdf</div>
+                <div class="file-name" id="unpacked-name" style="font-size: 0.95rem;">classified_report.pdf</div>
                 <div class="file-size" id="unpacked-size">14.2 KB</div>
               </div>
             </div>
           </div>
 
           <div id="text-preview-box" style="display: none; margin-bottom: 1rem;">
-            <label class="input-label">Text Content Preview:</label>
-            <textarea id="text-preview" class="text-input" rows="6" readonly style="font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
+            <label class="input-label">Extracted text preview:</label>
+            <textarea id="text-preview" class="text-input" rows="6" readonly style="font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.45;"></textarea>
           </div>
 
-          <a id="btn-download-unpacked" class="btn-primary btn-emerald" style="text-decoration: none;" download="payload.bin">
-            <span>⬇️</span> Download Extracted File
+          <a id="btn-download-unpacked" class="btn-secondary btn-verified" download="payload.bin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download extracted file
           </a>
         </div>
       </div>
     </div>
 
 
-    <!-- ================================================================= -->
-    <!-- TAB 3: FORENSIC STUDIO -->
-    <!-- ================================================================= -->
+    <!-- ------------------------------------------------------------------- -->
+    <!-- TAB 3: FORENSIC STUDIO                                              -->
+    <!-- ------------------------------------------------------------------- -->
     <div id="tab-audit" class="tab-content">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <span>🔬</span> Forensic & Steganalysis Studio
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Forensic steganalysis studio
           </div>
-          <span class="step-badge">INSPECTION</span>
+          <span class="panel-tag">INSPECTION</span>
         </div>
+
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Statistical verification of covert carrier stealth. Runs pair-of-values (PoV) Chi-Square (&chi;&sup2;) analysis and spatial pixel delta diagnostics.
+        </p>
 
         <div class="grid-2">
           <div>
-            <label class="input-label">Upload Carrier to Audit (Required):</label>
-            <div class="dropzone" onclick="document.getElementById('audit-carrier-input').click()">
-              <div class="dropzone-icon">🔍</div>
-              <div class="dropzone-title" id="audit-carrier-title">Choose Carrier Image</div>
+            <label class="input-label">Stego carrier image (Required):</label>
+            <div class="dropzone" id="audit-carrier-dropzone" onclick="document.getElementById('audit-carrier-input').click()">
+              <div class="dropzone-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+              <div class="dropzone-title" id="audit-carrier-title">Choose carrier image</div>
+              <div class="dropzone-desc">PNG format containing embedded payload</div>
               <input type="file" id="audit-carrier-input" class="file-input" accept="image/png,image/jpeg" onchange="handleAuditCarrier(this)">
             </div>
           </div>
           <div>
-            <label class="input-label">Upload Original Cover (Optional Comparison):</label>
-            <div class="dropzone" onclick="document.getElementById('audit-cover-input').click()">
-              <div class="dropzone-icon">⚖️</div>
-              <div class="dropzone-title" id="audit-cover-title">Choose Baseline Cover</div>
+            <label class="input-label">Baseline original cover (Optional comparison):</label>
+            <div class="dropzone" id="audit-cover-dropzone" onclick="document.getElementById('audit-cover-input').click()">
+              <div class="dropzone-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v18"/>
+                  <rect x="3" y="8" width="6" height="8" rx="1"/>
+                  <rect x="15" y="8" width="6" height="8" rx="1"/>
+                </svg>
+              </div>
+              <div class="dropzone-title" id="audit-cover-title">Choose baseline cover</div>
+              <div class="dropzone-desc">Enables pixel delta & residual heatmap</div>
               <input type="file" id="audit-cover-input" class="file-input" accept="image/png,image/jpeg" onchange="handleAuditCover(this)">
             </div>
           </div>
         </div>
 
-        <button class="btn-primary" style="margin-top: 1rem;" onclick="executeAudit()">
-          <span>🔍</span> Run Deep Statistical Audit
+        <button class="btn-action" style="margin-top: 1.25rem;" id="btn-audit" onclick="executeAudit()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Run statistical audit
         </button>
 
         <!-- Audit Metrics -->
-        <div class="result-card" id="audit-result" style="margin-top: 1.5rem;">
-          <div class="card-header">
-            <div class="card-title">Diagnostic Metrics</div>
-            <span class="result-badge" id="audit-verdict">CLEAN / STEALTH SECURE</span>
+        <div class="result-panel" id="audit-result" style="margin-top: 1.5rem;">
+          <div class="panel-header">
+            <div class="panel-title">Diagnostic telemetry</div>
+            <span class="verdict-tag secure" id="audit-verdict">Clean / Stealth secure</span>
           </div>
 
           <div class="metric-grid">
-            <div class="stat-pill">
-              <div class="stat-title">Stealth Score</div>
+            <div class="stat-cell">
+              <div class="stat-title">Stealth safety score</div>
               <div class="stat-value" id="aud-stealth">100%</div>
             </div>
-            <div class="stat-pill">
+            <div class="stat-cell">
               <div class="stat-title">Chi-Square p-value</div>
               <div class="stat-value" id="aud-chi2">0.0000</div>
             </div>
-            <div class="stat-pill">
-              <div class="stat-title">PSNR Distortion</div>
+            <div class="stat-cell">
+              <div class="stat-title">PSNR distortion</div>
               <div class="stat-value" id="aud-psnr">81.5 dB</div>
             </div>
-            <div class="stat-pill">
-              <div class="stat-title">Max Pixel Delta</div>
+            <div class="stat-cell">
+              <div class="stat-title">Max pixel delta</div>
               <div class="stat-value" id="aud-delta">&plusmn;1</div>
             </div>
           </div>
 
-          <!-- Interactive Before / After Image Comparator Slider -->
+          <!-- Interactive Optical Comparator Slider -->
           <div id="comparator-container" style="display: none; margin-top: 1.5rem;">
-            <label class="input-label">Interactive Before / After Swipe Comparator (Drag slider horizontally):</label>
-            <div class="comparator-wrap" id="comparator">
+            <label class="input-label">Interactive Before / After Swipe Comparator (Drag slider horizontally to inspect):</label>
+            <div class="comparator-wrap" id="comparator" style="--split-pos: 50%;">
               <img id="img-after" class="comparator-img" src="" alt="Carrier">
-              <div class="comparator-overlay" id="comparator-overlay">
-                <img id="img-before" class="comparator-img" src="" alt="Cover">
-              </div>
+              <img id="img-before" class="comparator-overlay-img" src="" alt="Cover">
+              <div class="comparator-line"></div>
               <input type="range" min="0" max="100" value="50" class="comparator-slider" id="comp-range" oninput="updateComparator(this.value)">
-              <div class="slider-handle-tag tag-left">ORIGINAL COVER</div>
-              <div class="slider-handle-tag tag-right">STEGO CARRIER</div>
+              <div class="comparator-tag tag-left">Baseline cover</div>
+              <div class="comparator-tag tag-right">Stego carrier</div>
             </div>
           </div>
 
           <!-- Amplified Residual View -->
           <div id="residual-container" style="display: none; margin-top: 1.5rem;">
-            <label class="input-label">Amplified Pixel Residual Heatmap (25&times; Amplification):</label>
-            <div style="background: #000; border-radius: 8px; padding: 0.5rem; text-align: center;">
-              <img id="img-residual" style="max-height: 350px; border-radius: 4px; object-fit: contain;" src="" alt="Residual">
+            <label class="input-label">Amplified pixel residual heatmap (25&times; amplification):</label>
+            <div style="background: #080a0e; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.75rem; text-align: center;">
+              <img id="img-residual" style="max-height: 380px; border-radius: 2px; object-fit: contain; width: 100%;" src="" alt="Residual">
             </div>
           </div>
         </div>
@@ -1107,7 +1432,9 @@
   <!-- Global Toast Notification -->
   <div class="toast" id="toast">Message</div>
 
-  <!-- Client-Side Application Script -->
+  <!-- ===================================================================== -->
+  <!-- Client-Side Application Script                                        -->
+  <!-- ===================================================================== -->
   <script>
     // State
     let currentPreset = 'Cover Sample (1024x1024)';
@@ -1116,6 +1443,7 @@
     let decoyFile = null;
     let carrierFile = null;
     let lastGeneratedCarrierBlob = null;
+    let lastGeneratedCarrierDataUrl = null;
     let coverCapacity = { total_pixels: 3145728, single_payload_max_bytes: 393108, dual_payload_max_bytes_each: 196500 };
 
     // Tab Switching
@@ -1123,8 +1451,10 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-      event.currentTarget.classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+      const targetContent = document.getElementById('tab-' + tabId);
+      if (targetContent) targetContent.classList.add('active');
     }
 
     // Presets
@@ -1137,7 +1467,6 @@
       document.getElementById('cover-preview').style.display = 'none';
       document.getElementById('cover-dropzone').style.display = 'block';
 
-      // Update capacity via API
       fetchCapacityForPreset(name);
     }
 
@@ -1163,6 +1492,8 @@
       if (e.target.files.length) handleCoverUpload(e.target.files[0]);
     });
 
+    setupDragDrop(coverDropzone, file => handleCoverUpload(file));
+
     function handleCoverUpload(file) {
       coverFile = file;
       currentPreset = null;
@@ -1172,7 +1503,6 @@
       document.getElementById('cover-preview').style.display = 'flex';
       document.getElementById('cover-dropzone').style.display = 'none';
 
-      // Query capacity
       const fd = new FormData();
       fd.append('cover_file', file);
       fetch('/api/capacity', { method: 'POST', body: fd })
@@ -1190,10 +1520,12 @@
     }
 
     // Secret Dropzone
+    const secretDropzone = document.getElementById('secret-dropzone');
     const secretInput = document.getElementById('secret-file-input');
     secretInput.addEventListener('change', e => {
       if (e.target.files.length) handleSecretUpload(e.target.files[0]);
     });
+    setupDragDrop(secretDropzone, file => handleSecretUpload(file));
 
     function handleSecretUpload(file) {
       secretFile = file;
@@ -1215,10 +1547,12 @@
     }
 
     // Decoy Dropzone
+    const decoyDropzone = document.getElementById('decoy-dropzone');
     const decoyInput = document.getElementById('decoy-file-input');
     decoyInput.addEventListener('change', e => {
       if (e.target.files.length) handleDecoyUpload(e.target.files[0]);
     });
+    setupDragDrop(decoyDropzone, file => handleDecoyUpload(file));
 
     function handleDecoyUpload(file) {
       decoyFile = file;
@@ -1237,7 +1571,7 @@
       updateCapacityBar();
     }
 
-    // Plausible Deniability Toggle
+    // Duress Decoy Toggle
     function toggleDeniability() {
       const cb = document.getElementById('denial-checkbox');
       cb.checked = !cb.checked;
@@ -1259,15 +1593,21 @@
       const maxAllowed = isDual ? coverCapacity.dual_payload_max_bytes_each : coverCapacity.single_payload_max_bytes;
 
       const secretBytes = secretFile ? secretFile.size : 0;
-      const pct = maxAllowed > 0 ? Math.min(100, (secretBytes / maxAllowed) * 100) : 0;
+      const decoyBytes = (isDual && decoyFile) ? decoyFile.size : 0;
+      const totalUsedBytes = secretBytes + decoyBytes;
 
+      const pct = maxAllowed > 0 ? Math.min(100, (secretBytes / maxAllowed) * 100) : 0;
       const bar = document.getElementById('capacity-bar');
       bar.style.width = pct.toFixed(1) + '%';
-      bar.classList.toggle('warning', pct > 85);
+      bar.classList.toggle('warning', pct > 90);
 
       const usedKb = (secretBytes / 1024).toFixed(1);
       const totalKb = (maxAllowed / 1024).toFixed(1);
+      const freeKb = Math.max(0, (maxAllowed - secretBytes) / 1024).toFixed(1);
+
       document.getElementById('capacity-text').innerText = `${usedKb} KB / ${totalKb} KB (${pct.toFixed(1)}%)`;
+      document.getElementById('capacity-available-text').innerText = `Available headroom: ${freeKb} KB`;
+      document.getElementById('capacity-mode-tag').innerText = isDual ? "Partition: Dual orthogonal" : "Partition: Full space";
     }
 
     // Password Toggle Helper
@@ -1280,9 +1620,32 @@
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.innerText = msg;
-      toast.style.borderColor = isError ? 'var(--rose-danger)' : 'var(--cyan-primary)';
+      toast.className = isError ? 'toast error' : 'toast';
       toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+      setTimeout(() => { toast.style.display = 'none'; }, 4200);
+    }
+
+    // Drag and drop helper
+    function setupDragDrop(el, onFile) {
+      ['dragenter', 'dragover'].forEach(name => {
+        el.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach(name => {
+        el.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.remove('dragover');
+        });
+      });
+      el.addEventListener('drop', e => {
+        if (e.dataTransfer && e.dataTransfer.files.length) {
+          onFile(e.dataTransfer.files[0]);
+        }
+      });
     }
 
     // EXECUTE PACK
@@ -1292,26 +1655,26 @@
       const decoyPass = document.getElementById('decoy-pass').value.trim();
 
       if (!secretFile) {
-        showToast("Please upload a Secret File first.", true);
+        showToast("Select a secret payload file first.", true);
         return;
       }
       if (!secretPass) {
-        showToast("Please provide a Secret Passphrase.", true);
+        showToast("Provide a secret passphrase.", true);
         return;
       }
       if (isDual) {
         if (!decoyFile || !decoyPass) {
-          showToast("Please provide both Decoy File and Decoy Passphrase.", true);
+          showToast("Provide both decoy file and decoy passphrase for duress mode.", true);
           return;
         }
         if (secretPass === decoyPass) {
-          showToast("Decoy Passphrase must be different from Secret Passphrase.", true);
+          showToast("Decoy passphrase must be different from secret passphrase.", true);
           return;
         }
       }
 
       const btn = document.getElementById('btn-pack');
-      btn.innerHTML = `<span class="spinner"></span> Encrypting & Packing Carrier...`;
+      btn.innerHTML = `<span class="spinner"></span> Packing covert carrier...`;
       btn.disabled = true;
 
       const fd = new FormData();
@@ -1334,48 +1697,78 @@
 
         if (!res.ok) {
           showToast(data.detail || "Packing failed.", true);
-          btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+          btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Seal and pack carrier`;
           btn.disabled = false;
           return;
         }
 
-        // Render Result Card
+        // Store generated carrier URL
+        lastGeneratedCarrierDataUrl = data.carrier_url;
+
+        // Render Result Panel
         document.getElementById('pack-result').classList.add('show');
         document.getElementById('res-psnr').innerText = `${data.audit.psnr_db.toFixed(1)} dB`;
         document.getElementById('res-ssim').innerText = `${data.audit.ssim.toFixed(4)}`;
         document.getElementById('res-stealth').innerText = `${data.audit.stealth_score}%`;
-        document.getElementById('res-mode').innerText = data.audit.mode.toUpperCase();
+        document.getElementById('res-mode').innerText = data.audit.mode === 'dual_deniable' ? 'DUAL' : 'SINGLE';
         document.getElementById('pack-verdict-badge').innerText = data.audit.verdict;
 
         // Set Download Link
         const dlBtn = document.getElementById('btn-download-carrier');
         dlBtn.href = data.carrier_url;
 
-        btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Seal and pack carrier`;
         btn.disabled = false;
-        showToast("Carrier packed successfully!");
+        showToast("Carrier packed successfully.");
 
-        // Scroll to results
         document.getElementById('pack-result').scrollIntoView({ behavior: 'smooth' });
 
       } catch (err) {
         showToast("Network or processing error.", true);
-        btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Seal and pack carrier`;
         btn.disabled = false;
       }
     }
 
+    // Helper: convert base64 data url to File object
+    async function dataUrlToFile(dataUrl, filename) {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: 'image/png' });
+    }
+
+    // Inspect in Studio from Pack Result
+    async function previewCarrier() {
+      if (!lastGeneratedCarrierDataUrl) return;
+      
+      switchTab('audit');
+      const carrierFileObj = await dataUrlToFile(lastGeneratedCarrierDataUrl, "carrier.png");
+      auditCarrierFile = carrierFileObj;
+      document.getElementById('audit-carrier-title').innerText = "Packed carrier (carrier.png)";
+
+      if (coverFile) {
+        auditCoverFile = coverFile;
+        document.getElementById('audit-cover-title').innerText = coverFile.name;
+      }
+
+      executeAudit();
+    }
+
     // UNPACK HANDLERS
+    const unpackDropzone = document.getElementById('unpack-dropzone');
     const carrierInput = document.getElementById('carrier-file-input');
     carrierInput.addEventListener('change', e => {
-      if (e.target.files.length) {
-        carrierFile = e.target.files[0];
-        document.getElementById('carrier-fn').innerText = carrierFile.name;
-        document.getElementById('carrier-size').innerText = `${(carrierFile.size / 1024).toFixed(1)} KB`;
-        document.getElementById('carrier-preview').style.display = 'flex';
-        document.getElementById('unpack-dropzone').style.display = 'none';
-      }
+      if (e.target.files.length) handleCarrierFile(e.target.files[0]);
     });
+    setupDragDrop(unpackDropzone, file => handleCarrierFile(file));
+
+    function handleCarrierFile(file) {
+      carrierFile = file;
+      document.getElementById('carrier-fn').innerText = carrierFile.name;
+      document.getElementById('carrier-size').innerText = `${(carrierFile.size / 1024).toFixed(1)} KB`;
+      document.getElementById('carrier-preview').style.display = 'flex';
+      document.getElementById('unpack-dropzone').style.display = 'none';
+    }
 
     function resetCarrier() {
       carrierFile = null;
@@ -1387,16 +1780,16 @@
     async function executeUnpack() {
       const pass = document.getElementById('unpack-pass').value.trim();
       if (!carrierFile) {
-        showToast("Please upload a Carrier Image.", true);
+        showToast("Upload a carrier image first.", true);
         return;
       }
       if (!pass) {
-        showToast("Please enter a Passphrase.", true);
+        showToast("Enter a passphrase to authenticate.", true);
         return;
       }
 
       const btn = document.getElementById('btn-unpack');
-      btn.innerHTML = `<span class="spinner"></span> Decrypting Vault...`;
+      btn.innerHTML = `<span class="spinner"></span> Authenticating vault...`;
       btn.disabled = true;
 
       const fd = new FormData();
@@ -1407,8 +1800,8 @@
         const res = await fetch('/api/unpack', { method: 'POST', body: fd });
         if (!res.ok) {
           const errData = await res.json();
-          showToast(errData.detail || "Authentication failed: invalid passphrase.", true);
-          btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+          showToast(errData.detail || "Authentication failed: invalid key.", true);
+          btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Authenticate and unlock vault`;
           btn.disabled = false;
           return;
         }
@@ -1418,7 +1811,7 @@
         document.getElementById('unpacked-name').innerText = data.filename;
         document.getElementById('unpacked-mime').innerText = data.mime_type;
         document.getElementById('unpacked-size').innerText = `${(data.size_bytes / 1024).toFixed(1)} KB`;
-        document.getElementById('unpack-slot-badge').innerText = `SLOT: ${data.partition_mode.toUpperCase()}`;
+        document.getElementById('unpack-slot-badge').innerText = `Slot: ${data.partition_mode.toUpperCase()}`;
 
         // Set download
         const dlBtn = document.getElementById('btn-download-unpacked');
@@ -1433,13 +1826,13 @@
           document.getElementById('text-preview-box').style.display = 'none';
         }
 
-        btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Authenticate and unlock vault`;
         btn.disabled = false;
-        showToast("Vault successfully unlocked!");
+        showToast("Vault unlocked successfully.");
 
       } catch (err) {
         showToast("Extraction error.", true);
-        btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Authenticate and unlock vault`;
         btn.disabled = false;
       }
     }
@@ -1447,6 +1840,16 @@
     // FORENSIC AUDIT
     let auditCarrierFile = null;
     let auditCoverFile = null;
+
+    setupDragDrop(document.getElementById('audit-carrier-dropzone'), file => {
+      auditCarrierFile = file;
+      document.getElementById('audit-carrier-title').innerText = file.name;
+    });
+
+    setupDragDrop(document.getElementById('audit-cover-dropzone'), file => {
+      auditCoverFile = file;
+      document.getElementById('audit-cover-title').innerText = file.name;
+    });
 
     function handleAuditCarrier(input) {
       if (input.files.length) {
@@ -1464,9 +1867,13 @@
 
     async function executeAudit() {
       if (!auditCarrierFile) {
-        showToast("Please upload a Carrier Image to audit.", true);
+        showToast("Upload a carrier image to audit.", true);
         return;
       }
+
+      const btn = document.getElementById('btn-audit');
+      btn.innerHTML = `<span class="spinner"></span> Auditing statistical metrics...`;
+      btn.disabled = true;
 
       const fd = new FormData();
       fd.append('carrier_file', auditCarrierFile);
@@ -1478,6 +1885,8 @@
 
         if (!res.ok) {
           showToast(data.detail || "Audit failed.", true);
+          btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Run statistical audit`;
+          btn.disabled = false;
           return;
         }
 
@@ -1493,26 +1902,35 @@
           document.getElementById('comparator-container').style.display = 'block';
           document.getElementById('img-before').src = data.cover_url;
           document.getElementById('img-after').src = data.carrier_url;
+          updateComparator(50);
+        } else {
+          document.getElementById('comparator-container').style.display = 'none';
         }
 
-        // Residual
+        // Residual Heatmap
         if (data.residual_url) {
           document.getElementById('residual-container').style.display = 'block';
           document.getElementById('img-residual').src = data.residual_url;
+        } else {
+          document.getElementById('residual-container').style.display = 'none';
         }
 
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Run statistical audit`;
+        btn.disabled = false;
         showToast("Forensic audit complete.");
 
       } catch (err) {
         showToast("Audit processing error.", true);
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Run statistical audit`;
+        btn.disabled = false;
       }
     }
 
     function updateComparator(val) {
-      document.getElementById('comparator-overlay').style.width = val + '%';
+      document.getElementById('comparator').style.setProperty('--split-pos', val + '%');
     }
 
-    // Init
+    // Init with standard preset
     selectPreset('Cover Sample (1024x1024)');
   </script>
 </body>

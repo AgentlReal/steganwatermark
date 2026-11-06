@@ -13,8 +13,9 @@ import numpy as np
 from PIL import Image
 
 from starlette.applications import Starlette
-from starlette.responses import HTMLResponse, JSONResponse, Response
-from starlette.routing import Route
+from starlette.responses import HTMLResponse, JSONResponse, Response, FileResponse
+from starlette.routing import Route, Mount
+from starlette.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
@@ -77,6 +78,14 @@ async def index_view(request):
     with open(template_path, "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(html_content)
+
+
+async def favicon_view(request):
+    """Serves the application favicon."""
+    fav_path = os.path.join(os.path.dirname(__file__), "static", "favicon.ico")
+    if os.path.exists(fav_path):
+        return FileResponse(fav_path, media_type="image/x-icon")
+    return Response(status_code=404)
 
 
 async def health_check(request):
@@ -263,12 +272,14 @@ async def api_audit(request):
 # -----------------------------------------------------------------------------
 routes = [
     Route("/", endpoint=index_view, methods=["GET"]),
+    Route("/favicon.ico", endpoint=favicon_view, methods=["GET"]),
     Route("/health", endpoint=health_check, methods=["GET"]),
     Route("/_stcore/health", endpoint=health_check, methods=["GET"]),
     Route("/api/capacity", endpoint=api_capacity, methods=["POST"]),
     Route("/api/pack", endpoint=api_pack, methods=["POST"]),
     Route("/api/unpack", endpoint=api_unpack, methods=["POST"]),
     Route("/api/audit", endpoint=api_audit, methods=["POST"]),
+    Mount("/static", app=StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static"),
 ]
 
 middleware = [

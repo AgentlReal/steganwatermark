@@ -27,6 +27,7 @@ COPY core/ ./core/
 COPY data/ ./data/
 COPY input/ ./input/
 COPY templates/ ./templates/
+COPY static/ ./static/
 COPY scripts/ ./scripts/
 COPY app.py .
 COPY ghostshare_cli.py .
