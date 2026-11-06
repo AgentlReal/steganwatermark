@@ -1,0 +1,69 @@
+{
+  "system": "Dual-Domain Stego-Watermark",
+  "version": "1.0.0",
+  "security_level": "AES-256-GCM",
+  "description": "Structured Configuration and Metadata Payload",
+  "records": [
+    {
+      "id": 0,
+      "hash": "hash_0000"
+    },
+    {
+      "id": 1,
+      "hash": "hash_0001"
+    },
+    {
+      "id": 2,
+      "hash": "hash_0002"
+    },
+    {
+      "id": 3,
+      "hash": "hash_0003"
+    },
+    {
+      "id": 4,
+      "hash": "hash_0004"
+    },
+    {
+      "id": 5,
+      "hash": "hash_0005"
+    },
+    {
+      "id": 6,
+      "hash": "hash_0006"
+    },
+    {
+      "id": 7,
+      "hash": "hash_0007"
+    },
+    {
+      "id": 8,
+      "hash": "hash_0008"
+    },
+    {
+      "id": 9,
+      "hash": "hash_0009"
+    },
+    {
+      "id": 10,
+      "hash": "hash_000a"
+    },
+    {
+      "id": 11,
+      "hash": "hash_000b"
+    },
+    {
+      "id": 12,
+      "hash": "hash_000c"
+    },
+    {
+      "id": 13,
+      "hash": "hash_000d"
+    },
+    {
+      "id": 14,
+      "hash": "hash_000e"
+    },
+    {
+      "id": 15,
+    
