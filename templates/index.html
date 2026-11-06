@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GhostShare — Deniable Covert Data Vault</title>
+  <style>
+    :root {
+      --bg-deep: #07090e;
+      --bg-surface: #0e131f;
+      --bg-card: #141c2e;
+      --bg-card-hover: #1a253c;
+      --border-subtle: #1e293b;
+      --border-focus: #06b6d4;
+      --cyan-primary: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --emerald-secure: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --amber-decoy: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.25);
+      --rose-danger: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: rgba(14, 19, 31, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      font-size: 1.5rem;
+      filter: drop-shadow(0 0 8px var(--cyan-primary));
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--emerald-secure);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald-secure);
+      box-shadow: 0 0 8px var(--emerald-secure);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    /* Tab Controls */
+    .tab-bar {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      padding: 0 1.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.85rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: var(--cyan-primary);
+      border-bottom-color: var(--cyan-primary);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .step-badge {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan-primary);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* Preset Cover Selector */
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .preset-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      border-color: var(--cyan-primary);
+      color: var(--text-main);
+    }
+
+    .preset-chip.active {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--cyan-primary);
+      color: var(--cyan-primary);
+      font-weight: 600;
+    }
+
+    /* Dropzones */
+    .dropzone {
+      border: 2px dashed var(--border-subtle);
+      border-radius: 10px;
+      background: rgba(14, 19, 31, 0.5);
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--cyan-primary);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .dropzone-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .dropzone-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .dropzone-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      overflow: hidden;
+    }
+
+    .file-badge {
+      background: #1e293b;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--cyan-primary);
+    }
+
+    .file-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .btn-remove:hover {
+      color: var(--rose-danger);
+    }
+
+    /* Capacity Progress Gauge */
+    .capacity-box {
+      margin-top: 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .capacity-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .capacity-val {
+      font-weight: 700;
+      color: var(--cyan-primary);
+      font-family: var(--font-mono);
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan-primary), #3b82f6);
+      transition: width 0.3s ease;
+      border-radius: 4px;
+    }
+
+    .progress-bar-fill.warning {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    /* Form Inputs & Password */
+    .input-group {
+      margin-top: 1rem;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .text-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      transition: border-color 0.15s ease;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: var(--cyan-primary);
+      box-shadow: 0 0 0 3px var(--cyan-glow);
+    }
+
+    .btn-eye {
+      position: absolute;
+      right: 0.75rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    /* Plausible Deniability Zone */
+    .denial-box {
+      margin-top: 1.5rem;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      background: rgba(245, 158, 11, 0.03);
+      border-radius: 10px;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .denial-box.active {
+      border-color: var(--amber-decoy);
+      box-shadow: 0 0 15px var(--amber-glow);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .toggle-info {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .toggle-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--amber-decoy);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--amber-decoy);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .denial-content {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .denial-content.show {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .explainer-badge {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 3px solid var(--amber-decoy);
+      padding: 0.6rem 0.8rem;
+      font-size: 0.8rem;
+      color: #fde68a;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 1rem;
+    }
+
+    /* Primary Action Buttons */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      background: #334155;
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-emerald:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Result Modal / Cards */
+    .result-card {
+      margin-top: 1.5rem;
+      background: #0f172a;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .result-card.show {
+      display: block;
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald-secure);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.3rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 1.25rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .stat-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+
+    .stat-title {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-mono);
+      margin-top: 0.2rem;
+    }
+
+    /* Interactive Comparison Slider */
+    .comparator-wrap {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      border-radius: 10px;
+      overflow: hidden;
+      user-select: none;
+      background: #000;
+    }
+
+    .comparator-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .comparator-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      width: 50%;
+      overflow: hidden;
+      border-right: 2px solid var(--cyan-primary);
+      box-shadow: 2px 0 10px var(--cyan-glow);
+    }
+
+    .comparator-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: ew-resize;
+      z-index: 10;
+    }
+
+    .slider-handle-tag {
+      position: absolute;
+      top: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .tag-left { left: 10px; }
+    .tag-right { right: 10px; }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1e293b;
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 100;
+      display: none;
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <div class="brand-title">GHOSTSHARE VAULT</div>
+        <div class="brand-subtitle">Deniable Covert Data Vault v2.0</div>
+      </div>
+    </div>
+    <div class="system-status">
+      <div class="status-dot"></div>
+      <span>Core Engine Active (AES-256-GCM + LSB Matching)</span>
+    </div>
+  </header>
+
+  <!-- Navigation Tab Bar -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('pack')">
+      <span>🗄️</span> 1. Pack Vault
+    </button>
+    <button class="tab-btn" onclick="switchTab('unpack')">
+      <span>🔓</span> 2. Unpack Vault
+    </button>
+    <button class="tab-btn" onclick="switchTab('audit')">
+      <span>🔬</span> 3. Forensic Studio
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: PACK VAULT -->
+    <!-- ================================================================= -->
+    <div id="tab-pack" class="tab-content active">
+      <div class="grid-2">
+
+        <!-- Column 1: Carrier Cover Selection -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🖼️</span> Step 1: Select Cover Carrier
+            </div>
+            <span class="step-badge">STEP 1 / 3</span>
+          </div>
+
+          <label class="input-label">Quick Presets (or Upload Below):</label>
+          <div class="preset-chips" id="preset-container">
+            <div class="preset-chip active" onclick="selectPreset('Cover Sample (1024x1024)')">Cover Sample (1024px)</div>
+            <div class="preset-chip" onclick="selectPreset('Lena (512x512)')">Lena (512px)</div>
+            <div class="preset-chip" onclick="selectPreset('Peppers (512x512)')">Peppers (512px)</div>
+            <div class="preset-chip" onclick="selectPreset('Baboon (512x512)')">Baboon (512px)</div>
+            <div class="preset-chip" onclick="selectPreset('Airplane (512x512)')">Airplane (512px)</div>
+          </div>
+
+          <!-- Cover Dropzone -->
+          <div class="dropzone" id="cover-dropzone" onclick="document.getElementById('cover-file-input').click()">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-title">Upload Custom Cover Image</div>
+            <div class="dropzone-desc">Drag & drop or click (PNG / JPG supported)</div>
+            <input type="file" id="cover-file-input" class="file-input" accept="image/png,image/jpeg">
+          </div>
+
+          <!-- File Preview -->
+          <div class="file-preview" id="cover-preview" style="display: none;">
+            <div class="file-info">
+              <span class="file-badge">COVER</span>
+              <div>
+                <div class="file-name" id="cover-name">cover.png</div>
+                <div class="file-size" id="cover-dims">1024 x 1024 px</div>
+              </div>
+            </div>
+            <button class="btn-remove" onclick="resetCover()">✕</button>
+          </div>
+
+          <!-- Dynamic Capacity Gauge -->
+          <div class="capacity-box">
+            <div class="capacity-header">
+              <span>Payload Space Utilization:</span>
+              <span class="capacity-val" id="capacity-text">0.0 KB / 383.9 KB (0.0%)</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="capacity-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Secret Payload & Plausible Deniability -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🔐</span> Step 2: Encrypt & Conceal Payload
+            </div>
+            <span class="step-badge">STEP 2 / 3</span>
+          </div>
+
+          <!-- Secret Payload Dropzone -->
+          <label class="input-label">Real Secret File (Any binary: PDF, ZIP, TXT, DOCX, KDBX):</label>
+          <div class="dropzone" id="secret-dropzone" onclick="document.getElementById('secret-file-input').click()">
+            <div class="dropzone-icon">📄</div>
+            <div class="dropzone-title">Drop Secret File Here</div>
+            <div class="dropzone-desc">Preserves original filename & extension</div>
+            <input type="file" id="secret-file-input" class="file-input">
+          </div>
+
+          <div class="file-preview" id="secret-preview" style="display: none;">
+            <div class="file-info">
+              <span class="file-badge" id="secret-badge">FILE</span>
+              <div>
+                <div class="file-name" id="secret-name">secret.pdf</div>
+                <div class="file-size" id="secret-size">0 KB</div>
+              </div>
+            </div>
+            <button class="btn-remove" onclick="resetSecret()">✕</button>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Secret Passphrase (AES-256-GCM Key):</label>
+            <div class="password-wrap">
+              <input type="password" id="secret-pass" class="text-input" placeholder="Enter high-entropy secret passphrase">
+              <button type="button" class="btn-eye" onclick="togglePass('secret-pass')">👁️</button>
+            </div>
+          </div>
+
+          <!-- Plausible Deniability (Decoy Mode) Toggle Card -->
+          <div class="denial-box" id="denial-card">
+            <div class="toggle-row" onclick="toggleDeniability()">
+              <div class="toggle-info">
+                <span>🛡️</span>
+                <div>
+                  <div class="toggle-title">Plausible Deniability (Decoy Mode)</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">Duress & Anti-Coercion Protection</div>
+                </div>
+              </div>
+              <label class="switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="denial-checkbox" onchange="handleDeniabilityChange()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="denial-content" id="denial-body">
+              <div class="explainer-badge">
+                💡 <strong>Rubber-Hose Protection:</strong> If forced to surrender your password, give the <strong>Decoy Passphrase</strong>. It unlocks only the innocent decoy file below. The real secret payload remains completely invisible.
+              </div>
+
+              <div class="dropzone" id="decoy-dropzone" onclick="document.getElementById('decoy-file-input').click()">
+                <div class="dropzone-icon">🧾</div>
+                <div class="dropzone-title">Drop Innocent Decoy File</div>
+                <div class="dropzone-desc">e.g. grocery_list.txt, recipes, public memo</div>
+                <input type="file" id="decoy-file-input" class="file-input">
+              </div>
+
+              <div class="file-preview" id="decoy-preview" style="display: none;">
+                <div class="file-info">
+                  <span class="file-badge">DECOY</span>
+                  <div>
+                    <div class="file-name" id="decoy-name">decoy.txt</div>
+                    <div class="file-size" id="decoy-size">0 KB</div>
+                  </div>
+                </div>
+                <button class="btn-remove" onclick="resetDecoy()">✕</button>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Decoy Passphrase (Surrender Key):</label>
+                <div class="password-wrap">
+                  <input type="password" id="decoy-pass" class="text-input" placeholder="Must be different from Secret Passphrase">
+                  <button type="button" class="btn-eye" onclick="togglePass('decoy-pass')">👁️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lock & Pack Button -->
+          <button class="btn-primary" id="btn-pack" onclick="executePack()">
+            <span>🔒</span> Lock & Pack Covert Vault
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Pack Result Container -->
+      <div class="result-card" id="pack-result">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🎉</span> Carrier Vault Packed Successfully
+          </div>
+          <span class="result-badge" id="pack-verdict-badge">CLEAN / STEALTH SECURE</span>
+        </div>
+
+        <div class="metric-grid">
+          <div class="stat-pill">
+            <div class="stat-title">Visual Fidelity (PSNR)</div>
+            <div class="stat-value" id="res-psnr">81.5 dB</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-title">Structural SSIM</div>
+            <div class="stat-value" id="res-ssim">1.0000</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-title">Stealth Safety Score</div>
+            <div class="stat-value" id="res-stealth">100.0%</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-title">Storage Mode</div>
+            <div class="stat-value" id="res-mode">DUAL</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
+          <a id="btn-download-carrier" class="btn-primary btn-emerald" style="margin-top: 0; text-decoration: none;" download="ghost_carrier.png">
+            <span>⬇️</span> Download Carrier (ghost_carrier.png)
+          </a>
+          <button class="btn-primary" style="margin-top: 0; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-main);" onclick="previewCarrier()">
+            <span>👁️</span> Inspect in Studio
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: UNPACK VAULT -->
+    <!-- ================================================================= -->
+    <div id="tab-unpack" class="tab-content">
+      <div style="max-width: 680px; margin: 0 auto;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🔓</span> Unlock & Extract Hidden Vault
+            </div>
+            <span class="step-badge">ZERO-KEY FOOTPRINT</span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Upload your carrier image and enter your password. No auxiliary <code style="font-family: var(--font-mono); color: var(--cyan-primary);">.key</code> file is required. The system automatically identifies whether your password belongs to the real or decoy vault.
+          </p>
+
+          <div class="dropzone" id="unpack-dropzone" onclick="document.getElementById('carrier-file-input').click()">
+            <div class="dropzone-icon">🖼️</div>
+            <div class="dropzone-title">Drop Carrier Image (PNG)</div>
+            <div class="dropzone-desc">The image containing hidden data</div>
+            <input type="file" id="carrier-file-input" class="file-input" accept="image/png">
+          </div>
+
+          <div class="file-preview" id="carrier-preview" style="display: none;">
+            <div class="file-info">
+              <span class="file-badge">CARRIER</span>
+              <div>
+                <div class="file-name" id="carrier-fn">carrier.png</div>
+                <div class="file-size" id="carrier-size">0 KB</div>
+              </div>
+            </div>
+            <button class="btn-remove" onclick="resetCarrier()">✕</button>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Passphrase (Secret or Decoy):</label>
+            <div class="password-wrap">
+              <input type="password" id="unpack-pass" class="text-input" placeholder="Enter passphrase to unlock">
+              <button type="button" class="btn-eye" onclick="togglePass('unpack-pass')">👁️</button>
+            </div>
+          </div>
+
+          <button class="btn-primary btn-emerald" id="btn-unpack" onclick="executeUnpack()">
+            <span>🔓</span> Authenticate & Unlock Vault
+          </button>
+        </div>
+
+        <!-- Extraction Result Card -->
+        <div class="result-card" id="unpack-result">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📄</span> Unlocked Document Ready
+            </div>
+            <span class="result-badge" id="unpack-slot-badge">ODD / SECRET</span>
+          </div>
+
+          <div class="file-preview" style="margin: 1rem 0;">
+            <div class="file-info">
+              <span class="file-badge" id="unpacked-mime">PDF</span>
+              <div>
+                <div class="file-name" id="unpacked-name" style="font-size: 1.05rem;">classified_report.pdf</div>
+                <div class="file-size" id="unpacked-size">14.2 KB</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="text-preview-box" style="display: none; margin-bottom: 1rem;">
+            <label class="input-label">Text Content Preview:</label>
+            <textarea id="text-preview" class="text-input" rows="6" readonly style="font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
+          </div>
+
+          <a id="btn-download-unpacked" class="btn-primary btn-emerald" style="text-decoration: none;" download="payload.bin">
+            <span>⬇️</span> Download Extracted File
+          </a>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: FORENSIC STUDIO -->
+    <!-- ================================================================= -->
+    <div id="tab-audit" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🔬</span> Forensic & Steganalysis Studio
+          </div>
+          <span class="step-badge">INSPECTION</span>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label class="input-label">Upload Carrier to Audit (Required):</label>
+            <div class="dropzone" onclick="document.getElementById('audit-carrier-input').click()">
+              <div class="dropzone-icon">🔍</div>
+              <div class="dropzone-title" id="audit-carrier-title">Choose Carrier Image</div>
+              <input type="file" id="audit-carrier-input" class="file-input" accept="image/png,image/jpeg" onchange="handleAuditCarrier(this)">
+            </div>
+          </div>
+          <div>
+            <label class="input-label">Upload Original Cover (Optional Comparison):</label>
+            <div class="dropzone" onclick="document.getElementById('audit-cover-input').click()">
+              <div class="dropzone-icon">⚖️</div>
+              <div class="dropzone-title" id="audit-cover-title">Choose Baseline Cover</div>
+              <input type="file" id="audit-cover-input" class="file-input" accept="image/png,image/jpeg" onchange="handleAuditCover(this)">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top: 1rem;" onclick="executeAudit()">
+          <span>🔍</span> Run Deep Statistical Audit
+        </button>
+
+        <!-- Audit Metrics -->
+        <div class="result-card" id="audit-result" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <div class="card-title">Diagnostic Metrics</div>
+            <span class="result-badge" id="audit-verdict">CLEAN / STEALTH SECURE</span>
+          </div>
+
+          <div class="metric-grid">
+            <div class="stat-pill">
+              <div class="stat-title">Stealth Score</div>
+              <div class="stat-value" id="aud-stealth">100%</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-title">Chi-Square p-value</div>
+              <div class="stat-value" id="aud-chi2">0.0000</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-title">PSNR Distortion</div>
+              <div class="stat-value" id="aud-psnr">81.5 dB</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-title">Max Pixel Delta</div>
+              <div class="stat-value" id="aud-delta">&plusmn;1</div>
+            </div>
+          </div>
+
+          <!-- Interactive Before / After Image Comparator Slider -->
+          <div id="comparator-container" style="display: none; margin-top: 1.5rem;">
+            <label class="input-label">Interactive Before / After Swipe Comparator (Drag slider horizontally):</label>
+            <div class="comparator-wrap" id="comparator">
+              <img id="img-after" class="comparator-img" src="" alt="Carrier">
+              <div class="comparator-overlay" id="comparator-overlay">
+                <img id="img-before" class="comparator-img" src="" alt="Cover">
+              </div>
+              <input type="range" min="0" max="100" value="50" class="comparator-slider" id="comp-range" oninput="updateComparator(this.value)">
+              <div class="slider-handle-tag tag-left">ORIGINAL COVER</div>
+              <div class="slider-handle-tag tag-right">STEGO CARRIER</div>
+            </div>
+          </div>
+
+          <!-- Amplified Residual View -->
+          <div id="residual-container" style="display: none; margin-top: 1.5rem;">
+            <label class="input-label">Amplified Pixel Residual Heatmap (25&times; Amplification):</label>
+            <div style="background: #000; border-radius: 8px; padding: 0.5rem; text-align: center;">
+              <img id="img-residual" style="max-height: 350px; border-radius: 4px; object-fit: contain;" src="" alt="Residual">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Global Toast Notification -->
+  <div class="toast" id="toast">Message</div>
+
+  <!-- Client-Side Application Script -->
+  <script>
+    // State
+    let currentPreset = 'Cover Sample (1024x1024)';
+    let coverFile = null;
+    let secretFile = null;
+    let decoyFile = null;
+    let carrierFile = null;
+    let lastGeneratedCarrierBlob = null;
+    let coverCapacity = { total_pixels: 3145728, single_payload_max_bytes: 393108, dual_payload_max_bytes_each: 196500 };
+
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // Presets
+    function selectPreset(name) {
+      currentPreset = name;
+      coverFile = null;
+      document.querySelectorAll('.preset-chip').forEach(c => {
+        c.classList.toggle('active', c.innerText.includes(name.split(' ')[0]));
+      });
+      document.getElementById('cover-preview').style.display = 'none';
+      document.getElementById('cover-dropzone').style.display = 'block';
+
+      // Update capacity via API
+      fetchCapacityForPreset(name);
+    }
+
+    async function fetchCapacityForPreset(name) {
+      const formData = new FormData();
+      formData.append('preset', name);
+      try {
+        const res = await fetch('/api/capacity', { method: 'POST', body: formData });
+        if (res.ok) {
+          coverCapacity = await res.json();
+          updateCapacityBar();
+        }
+      } catch (e) {
+        console.error("Failed to fetch preset capacity", e);
+      }
+    }
+
+    // Cover Dropzone
+    const coverDropzone = document.getElementById('cover-dropzone');
+    const coverInput = document.getElementById('cover-file-input');
+
+    coverInput.addEventListener('change', e => {
+      if (e.target.files.length) handleCoverUpload(e.target.files[0]);
+    });
+
+    function handleCoverUpload(file) {
+      coverFile = file;
+      currentPreset = null;
+      document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('cover-name').innerText = file.name;
+      document.getElementById('cover-dims').innerText = `${(file.size / 1024).toFixed(1)} KB`;
+      document.getElementById('cover-preview').style.display = 'flex';
+      document.getElementById('cover-dropzone').style.display = 'none';
+
+      // Query capacity
+      const fd = new FormData();
+      fd.append('cover_file', file);
+      fetch('/api/capacity', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          coverCapacity = data;
+          updateCapacityBar();
+        });
+    }
+
+    function resetCover() {
+      coverFile = null;
+      coverInput.value = '';
+      selectPreset('Cover Sample (1024x1024)');
+    }
+
+    // Secret Dropzone
+    const secretInput = document.getElementById('secret-file-input');
+    secretInput.addEventListener('change', e => {
+      if (e.target.files.length) handleSecretUpload(e.target.files[0]);
+    });
+
+    function handleSecretUpload(file) {
+      secretFile = file;
+      const ext = file.name.split('.').pop().toUpperCase();
+      document.getElementById('secret-badge').innerText = ext || 'FILE';
+      document.getElementById('secret-name').innerText = file.name;
+      document.getElementById('secret-size').innerText = `${(file.size / 1024).toFixed(1)} KB`;
+      document.getElementById('secret-preview').style.display = 'flex';
+      document.getElementById('secret-dropzone').style.display = 'none';
+      updateCapacityBar();
+    }
+
+    function resetSecret() {
+      secretFile = null;
+      secretInput.value = '';
+      document.getElementById('secret-preview').style.display = 'none';
+      document.getElementById('secret-dropzone').style.display = 'block';
+      updateCapacityBar();
+    }
+
+    // Decoy Dropzone
+    const decoyInput = document.getElementById('decoy-file-input');
+    decoyInput.addEventListener('change', e => {
+      if (e.target.files.length) handleDecoyUpload(e.target.files[0]);
+    });
+
+    function handleDecoyUpload(file) {
+      decoyFile = file;
+      document.getElementById('decoy-name').innerText = file.name;
+      document.getElementById('decoy-size').innerText = `${(file.size / 1024).toFixed(1)} KB`;
+      document.getElementById('decoy-preview').style.display = 'flex';
+      document.getElementById('decoy-dropzone').style.display = 'none';
+      updateCapacityBar();
+    }
+
+    function resetDecoy() {
+      decoyFile = null;
+      decoyInput.value = '';
+      document.getElementById('decoy-preview').style.display = 'none';
+      document.getElementById('decoy-dropzone').style.display = 'block';
+      updateCapacityBar();
+    }
+
+    // Plausible Deniability Toggle
+    function toggleDeniability() {
+      const cb = document.getElementById('denial-checkbox');
+      cb.checked = !cb.checked;
+      handleDeniabilityChange();
+    }
+
+    function handleDeniabilityChange() {
+      const checked = document.getElementById('denial-checkbox').checked;
+      const body = document.getElementById('denial-body');
+      const card = document.getElementById('denial-card');
+      card.classList.toggle('active', checked);
+      body.classList.toggle('show', checked);
+      updateCapacityBar();
+    }
+
+    // Capacity Bar Calculator
+    function updateCapacityBar() {
+      const isDual = document.getElementById('denial-checkbox').checked;
+      const maxAllowed = isDual ? coverCapacity.dual_payload_max_bytes_each : coverCapacity.single_payload_max_bytes;
+
+      const secretBytes = secretFile ? secretFile.size : 0;
+      const pct = maxAllowed > 0 ? Math.min(100, (secretBytes / maxAllowed) * 100) : 0;
+
+      const bar = document.getElementById('capacity-bar');
+      bar.style.width = pct.toFixed(1) + '%';
+      bar.classList.toggle('warning', pct > 85);
+
+      const usedKb = (secretBytes / 1024).toFixed(1);
+      const totalKb = (maxAllowed / 1024).toFixed(1);
+      document.getElementById('capacity-text').innerText = `${usedKb} KB / ${totalKb} KB (${pct.toFixed(1)}%)`;
+    }
+
+    // Password Toggle Helper
+    function togglePass(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    // Toast Notification
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.borderColor = isError ? 'var(--rose-danger)' : 'var(--cyan-primary)';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    // EXECUTE PACK
+    async function executePack() {
+      const secretPass = document.getElementById('secret-pass').value.trim();
+      const isDual = document.getElementById('denial-checkbox').checked;
+      const decoyPass = document.getElementById('decoy-pass').value.trim();
+
+      if (!secretFile) {
+        showToast("Please upload a Secret File first.", true);
+        return;
+      }
+      if (!secretPass) {
+        showToast("Please provide a Secret Passphrase.", true);
+        return;
+      }
+      if (isDual) {
+        if (!decoyFile || !decoyPass) {
+          showToast("Please provide both Decoy File and Decoy Passphrase.", true);
+          return;
+        }
+        if (secretPass === decoyPass) {
+          showToast("Decoy Passphrase must be different from Secret Passphrase.", true);
+          return;
+        }
+      }
+
+      const btn = document.getElementById('btn-pack');
+      btn.innerHTML = `<span class="spinner"></span> Encrypting & Packing Carrier...`;
+      btn.disabled = true;
+
+      const fd = new FormData();
+      if (coverFile) {
+        fd.append('cover_file', coverFile);
+      } else {
+        fd.append('preset', currentPreset);
+      }
+      fd.append('secret_file', secretFile);
+      fd.append('secret_pass', secretPass);
+
+      if (isDual) {
+        fd.append('decoy_file', decoyFile);
+        fd.append('decoy_pass', decoyPass);
+      }
+
+      try {
+        const res = await fetch('/api/pack', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.detail || "Packing failed.", true);
+          btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+          btn.disabled = false;
+          return;
+        }
+
+        // Render Result Card
+        document.getElementById('pack-result').classList.add('show');
+        document.getElementById('res-psnr').innerText = `${data.audit.psnr_db.toFixed(1)} dB`;
+        document.getElementById('res-ssim').innerText = `${data.audit.ssim.toFixed(4)}`;
+        document.getElementById('res-stealth').innerText = `${data.audit.stealth_score}%`;
+        document.getElementById('res-mode').innerText = data.audit.mode.toUpperCase();
+        document.getElementById('pack-verdict-badge').innerText = data.audit.verdict;
+
+        // Set Download Link
+        const dlBtn = document.getElementById('btn-download-carrier');
+        dlBtn.href = data.carrier_url;
+
+        btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+        btn.disabled = false;
+        showToast("Carrier packed successfully!");
+
+        // Scroll to results
+        document.getElementById('pack-result').scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        showToast("Network or processing error.", true);
+        btn.innerHTML = `<span>🔒</span> Lock & Pack Covert Vault`;
+        btn.disabled = false;
+      }
+    }
+
+    // UNPACK HANDLERS
+    const carrierInput = document.getElementById('carrier-file-input');
+    carrierInput.addEventListener('change', e => {
+      if (e.target.files.length) {
+        carrierFile = e.target.files[0];
+        document.getElementById('carrier-fn').innerText = carrierFile.name;
+        document.getElementById('carrier-size').innerText = `${(carrierFile.size / 1024).toFixed(1)} KB`;
+        document.getElementById('carrier-preview').style.display = 'flex';
+        document.getElementById('unpack-dropzone').style.display = 'none';
+      }
+    });
+
+    function resetCarrier() {
+      carrierFile = null;
+      carrierInput.value = '';
+      document.getElementById('carrier-preview').style.display = 'none';
+      document.getElementById('unpack-dropzone').style.display = 'block';
+    }
+
+    async function executeUnpack() {
+      const pass = document.getElementById('unpack-pass').value.trim();
+      if (!carrierFile) {
+        showToast("Please upload a Carrier Image.", true);
+        return;
+      }
+      if (!pass) {
+        showToast("Please enter a Passphrase.", true);
+        return;
+      }
+
+      const btn = document.getElementById('btn-unpack');
+      btn.innerHTML = `<span class="spinner"></span> Decrypting Vault...`;
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('carrier_file', carrierFile);
+      fd.append('passphrase', pass);
+
+      try {
+        const res = await fetch('/api/unpack', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const errData = await res.json();
+          showToast(errData.detail || "Authentication failed: invalid passphrase.", true);
+          btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+          btn.disabled = false;
+          return;
+        }
+
+        const data = await res.json();
+        document.getElementById('unpack-result').classList.add('show');
+        document.getElementById('unpacked-name').innerText = data.filename;
+        document.getElementById('unpacked-mime').innerText = data.mime_type;
+        document.getElementById('unpacked-size').innerText = `${(data.size_bytes / 1024).toFixed(1)} KB`;
+        document.getElementById('unpack-slot-badge').innerText = `SLOT: ${data.partition_mode.toUpperCase()}`;
+
+        // Set download
+        const dlBtn = document.getElementById('btn-download-unpacked');
+        dlBtn.href = data.download_url;
+        dlBtn.download = data.filename;
+
+        // Preview text if applicable
+        if (data.is_text && data.text_content) {
+          document.getElementById('text-preview-box').style.display = 'block';
+          document.getElementById('text-preview').value = data.text_content;
+        } else {
+          document.getElementById('text-preview-box').style.display = 'none';
+        }
+
+        btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+        btn.disabled = false;
+        showToast("Vault successfully unlocked!");
+
+      } catch (err) {
+        showToast("Extraction error.", true);
+        btn.innerHTML = `<span>🔓</span> Authenticate & Unlock Vault`;
+        btn.disabled = false;
+      }
+    }
+
+    // FORENSIC AUDIT
+    let auditCarrierFile = null;
+    let auditCoverFile = null;
+
+    function handleAuditCarrier(input) {
+      if (input.files.length) {
+        auditCarrierFile = input.files[0];
+        document.getElementById('audit-carrier-title').innerText = auditCarrierFile.name;
+      }
+    }
+
+    function handleAuditCover(input) {
+      if (input.files.length) {
+        auditCoverFile = input.files[0];
+        document.getElementById('audit-cover-title').innerText = auditCoverFile.name;
+      }
+    }
+
+    async function executeAudit() {
+      if (!auditCarrierFile) {
+        showToast("Please upload a Carrier Image to audit.", true);
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('carrier_file', auditCarrierFile);
+      if (auditCoverFile) fd.append('cover_file', auditCoverFile);
+
+      try {
+        const res = await fetch('/api/audit', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.detail || "Audit failed.", true);
+          return;
+        }
+
+        document.getElementById('audit-result').classList.add('show');
+        document.getElementById('aud-stealth').innerText = `${data.stealth_score}%`;
+        document.getElementById('aud-chi2').innerText = `${data.chi2_p_value.toFixed(4)}`;
+        document.getElementById('aud-psnr').innerText = data.psnr_db ? `${data.psnr_db.toFixed(1)} dB` : "N/A";
+        document.getElementById('aud-delta').innerText = data.max_pixel_delta !== undefined ? `±${data.max_pixel_delta}` : "N/A";
+        document.getElementById('audit-verdict').innerText = data.verdict;
+
+        // Interactive Comparator
+        if (data.cover_url && data.carrier_url) {
+          document.getElementById('comparator-container').style.display = 'block';
+          document.getElementById('img-before').src = data.cover_url;
+          document.getElementById('img-after').src = data.carrier_url;
+        }
+
+        // Residual
+        if (data.residual_url) {
+          document.getElementById('residual-container').style.display = 'block';
+          document.getElementById('img-residual').src = data.residual_url;
+        }
+
+        showToast("Forensic audit complete.");
+
+      } catch (err) {
+        showToast("Audit processing error.", true);
+      }
+    }
+
+    function updateComparator(val) {
+      document.getElementById('comparator-overlay').style.width = val + '%';
+    }
+
+    // Init
+    selectPreset('Cover Sample (1024x1024)');
+  </script>
+</body>
+</html>
